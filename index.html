@@ -29,8 +29,6 @@ flex-direction: column;
 animation: swipeUp 0.8s ease-out;
 }
 
-/* Header */
-
 .header {
 padding: 50px 60px 20px;
 }
@@ -56,8 +54,6 @@ opacity 0.3s ease,
 transform 0.3s ease;
 }
 
-/* Swipe-up waiting text */
-
 .welcome.swipe {
 opacity: 0;
 transform: translateY(-25px);
@@ -67,8 +63,6 @@ transform: translateY(-25px);
 opacity: 1;
 transform: translateY(25px);
 }
-
-/* Conversation */
 
 .conversation {
 flex: 1;
@@ -103,15 +97,16 @@ cursor: pointer;
 color: #806500;
 }
 
-/* Thinking */
+.timerDisplay {
+font-size: 30px;
+margin-top: 8px;
+}
 
 .thinking {
 font-size: 22px;
 color: #777;
 animation: thinkingPulse 1.2s infinite;
 }
-
-/* Input */
 
 .inputArea {
 position: fixed;
@@ -162,8 +157,6 @@ button:hover {
 color: #b38c00;
 }
 
-/* Animations */
-
 @keyframes swipeUp {
 
 from {
@@ -203,8 +196,6 @@ opacity: 1;
 }
 
 }
-
-/* Smaller screens */
 
 @media (max-width: 600px) {
 
@@ -412,6 +403,113 @@ thinking.remove();
 
 
 /* =========================================
+TIMER
+========================================= */
+
+let timerInterval = null;
+let timerEndTime = null;
+
+
+function startTimer(minutes) {
+
+if (timerInterval) {
+clearInterval(timerInterval);
+}
+
+timerEndTime =
+Date.now() + (minutes * 60 * 1000);
+
+const conversation =
+document.getElementById("conversation");
+
+const message =
+document.createElement("div");
+
+message.className = "message";
+
+message.id = "timerMessage";
+
+message.innerHTML = `
+<div class="sender">Sol</div>
+<div class="messageText">
+Timer set for ${minutes} minute${minutes === 1 ? "" : "s"}.
+</div>
+<div id="timerDisplay" class="timerDisplay">
+${minutes}:00
+</div>
+`;
+
+conversation.appendChild(message);
+
+scrollDown();
+
+updateTimer();
+
+timerInterval =
+setInterval(updateTimer, 250);
+}
+
+
+function updateTimer() {
+
+const remaining =
+Math.max(
+0,
+timerEndTime - Date.now()
+);
+
+const totalSeconds =
+Math.ceil(remaining / 1000);
+
+const minutes =
+Math.floor(totalSeconds / 60);
+
+const seconds =
+totalSeconds % 60;
+
+const display =
+document.getElementById("timerDisplay");
+
+if (display) {
+
+display.textContent =
+minutes +
+":" +
+String(seconds).padStart(2, "0");
+
+}
+
+if (remaining <= 0) {
+
+clearInterval(timerInterval);
+
+timerInterval = null;
+
+if (display) {
+display.textContent = "0:00";
+}
+
+addSolMessage(
+"Your timer is done!"
+);
+
+if ("Notification" in window) {
+
+if (Notification.permission === "granted") {
+
+new Notification("Sol", {
+body: "Your timer is done!"
+});
+
+}
+
+}
+
+}
+}
+
+
+/* =========================================
 SOL COMMANDS
 ========================================= */
 
@@ -446,11 +544,12 @@ if (
 command === "hello" ||
 command === "hi" ||
 command === "hey" ||
-command === "hiya"
+command === "hiya" ||
+command === "hey sol"
 ) {
 
 addSolMessage(
-"Hello! How can I help you?"
+"How can I help you?"
 );
 
 return;
@@ -495,7 +594,7 @@ command === "what do you do"
 ) {
 
 addSolMessage(
-"I can answer simple questions, tell you the date and time, and help you search the web."
+"I can answer simple questions, tell you the date and time, set a 1–5 minute timer, and help you search the web."
 );
 
 return;
@@ -537,8 +636,45 @@ return;
 if (command === "help") {
 
 addSolMessage(
-"You can ask me about the date, time, my name, or try asking me something else."
+"You can ask me about the date, time, my name, set a timer from 1 to 5 minutes, or ask for my commands."
 );
+
+return;
+}
+
+
+/* COMMANDS */
+
+if (
+command === "commands" ||
+command === "list of commands" ||
+command === "command list"
+) {
+
+addSolMessage(`
+<strong>Sol's commands</strong><br><br>
+
+Hello / Hi / Hey Sol<br>
+How are you?<br>
+What is your name?<br>
+Who are you?<br>
+What can you do?<br>
+What is Sol?<br>
+Are you real?<br>
+Help<br>
+What's the date?<br>
+What day is it?<br>
+What time is it?<br>
+Good morning<br>
+Good afternoon<br>
+Good evening<br>
+Good night<br>
+Goodbye / Bye<br>
+Thanks / Thank you<br>
+Tell me a joke<br>
+Version<br>
+Set a timer for 1–5 minutes
+`);
 
 return;
 }
@@ -602,6 +738,35 @@ addSolMessage(
 );
 
 return;
+}
+
+
+/* TIMER */
+
+const timerMatch =
+command.match(
+/(?:set\s+(?:a\s+)?)?timer\s+(?:for\s+)?(\d+)\s*(minute|minutes|min|mins)/
+);
+
+if (timerMatch) {
+
+const minutes =
+parseInt(timerMatch[1]);
+
+if (minutes >= 1 && minutes <= 5) {
+
+startTimer(minutes);
+
+return;
+
+} else {
+
+addSolMessage(
+"I can only set timers from 1 to 5 minutes."
+);
+
+return;
+}
 }
 
 
