@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sol</title>
+
+<style>
+* {
+box-sizing: border-box;
+}
+
+html, body {
+margin: 0;
+width: 100%;
+height: 100%;
+background: white;
+font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-weight: 300;
+color: #222;
+}
+
+.sol {
+width: 100%;
+height: 100%;
+display: flex;
+flex-direction: column;
+animation: swipeUp 0.8s ease-out;
+}
+
+/* Header */
+
+.header {
+padding: 50px 60px 20px;
+}
+
+.ring {
+width: 80px;
+height: 80px;
+border: 7px solid #f4c400;
+border-radius: 50%;
+margin-bottom: 25px;
+}
+
+.welcome {
+font-size: 32px;
+line-height: 1.35;
+min-height: 45px;
+
+opacity: 1;
+transform: translateY(0);
+
+transition:
+opacity 0.3s ease,
+transform 0.3s ease;
+}
+
+/* Swipe-up waiting text */
+
+.welcome.swipe {
+opacity: 0;
+transform: translateY(-25px);
+}
+
+.welcome.swipe-in {
+opacity: 1;
+transform: translateY(25px);
+}
+
+/* Conversation */
+
+.conversation {
+flex: 1;
+overflow-y: auto;
+padding: 20px 60px 140px;
+}
+
+.message {
+max-width: 750px;
+margin-bottom: 28px;
+animation: messageUp 0.35s ease-out;
+}
+
+.sender {
+font-size: 17px;
+color: #777;
+margin-bottom: 5px;
+}
+
+.messageText {
+font-size: 25px;
+line-height: 1.4;
+}
+
+.searchLink {
+color: #b38c00;
+text-decoration: underline;
+cursor: pointer;
+}
+
+.searchLink:hover {
+color: #806500;
+}
+
+/* Thinking */
+
+.thinking {
+font-size: 22px;
+color: #777;
+animation: thinkingPulse 1.2s infinite;
+}
+
+/* Input */
+
+.inputArea {
+position: fixed;
+bottom: 0;
+left: 0;
+width: 100%;
+
+padding: 20px 60px 30px;
+
+background: rgba(255,255,255,0.97);
+}
+
+.inputBox {
+max-width: 900px;
+
+display: flex;
+align-items: center;
+
+border-bottom: 1px solid #aaa;
+}
+
+input {
+flex: 1;
+
+border: none;
+outline: none;
+
+background: transparent;
+
+font-family: inherit;
+font-size: 21px;
+font-weight: 300;
+
+padding: 12px 0;
+}
+
+button {
+border: none;
+background: transparent;
+
+font-family: inherit;
+font-size: 18px;
+
+cursor: pointer;
+}
+
+button:hover {
+color: #b38c00;
+}
+
+/* Animations */
+
+@keyframes swipeUp {
+
+from {
+opacity: 0;
+transform: translateY(70px);
+}
+
+to {
+opacity: 1;
+transform: translateY(0);
+}
+
+}
+
+@keyframes messageUp {
+
+from {
+opacity: 0;
+transform: translateY(15px);
+}
+
+to {
+opacity: 1;
+transform: translateY(0);
+}
+
+}
+
+@keyframes thinkingPulse {
+
+0%, 100% {
+opacity: 0.45;
+}
+
+50% {
+opacity: 1;
+}
+
+}
+
+/* Smaller screens */
+
+@media (max-width: 600px) {
+
+.header {
+padding: 30px 25px 10px;
+}
+
+.conversation {
+padding-left: 25px;
+padding-right: 25px;
+}
+
+.inputArea {
+padding-left: 25px;
+padding-right: 25px;
+}
+
+.ring {
+width: 65px;
+height: 65px;
+}
+
+.welcome {
+font-size: 26px;
+}
+
+.messageText {
+font-size: 22px;
+}
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="sol">
+
+<div class="header">
+
+<div class="ring"></div>
+
+<div id="welcome" class="welcome">
+How can I help you?
+</div>
+
+</div>
+
+<div id="conversation" class="conversation"></div>
+
+<div class="inputArea">
+
+<div class="inputBox">
+
+<input
+id="userInput"
+type="text"
+placeholder="Ask Sol..."
+autocomplete="off"
+>
+
+<button onclick="askSol()">
+Send
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+/* =========================================
+WAITING TEXT
+========================================= */
+
+const waitingMessages = [
+"How can I help you?",
+"Go ahead, I’m listening.",
+"You can type on the line below."
+];
+
+let waitingIndex = 0;
+
+const welcome =
+document.getElementById("welcome");
+
+
+setInterval(() => {
+
+welcome.classList.remove("swipe-in");
+welcome.classList.add("swipe");
+
+setTimeout(() => {
+
+waitingIndex =
+(waitingIndex + 1) %
+waitingMessages.length;
+
+welcome.textContent =
+waitingMessages[waitingIndex];
+
+welcome.classList.remove("swipe");
+
+void welcome.offsetWidth;
+
+welcome.classList.add("swipe-in");
+
+}, 300);
+
+}, 4000);
+
+
+/* =========================================
+USER MESSAGE
+========================================= */
+
+function addUserMessage(text) {
+
+const conversation =
+document.getElementById("conversation");
+
+const message =
+document.createElement("div");
+
+message.className = "message";
+
+message.innerHTML = `
+<div class="sender">You</div>
+<div class="messageText">
+${escapeHTML(text)}
+</div>
+`;
+
+conversation.appendChild(message);
+
+scrollDown();
+}
+
+
+/* =========================================
+SOL MESSAGE
+========================================= */
+
+function addSolMessage(text) {
+
+const conversation =
+document.getElementById("conversation");
+
+const message =
+document.createElement("div");
+
+message.className = "message";
+
+message.innerHTML = `
+<div class="sender">Sol</div>
+<div class="messageText">
+${text}
+</div>
+`;
+
+conversation.appendChild(message);
+
+scrollDown();
+}
+
+
+/* =========================================
+THINKING PAUSE
+========================================= */
+
+function addThinking() {
+
+const conversation =
+document.getElementById("conversation");
+
+const message =
+document.createElement("div");
+
+message.id = "thinkingMessage";
+message.className = "message";
+
+message.innerHTML = `
+<div class="sender">Sol</div>
+<div class="thinking">…</div>
+`;
+
+conversation.appendChild(message);
+
+scrollDown();
+}
+
+
+function removeThinking() {
+
+const thinking =
+document.getElementById("thinkingMessage");
+
+if (thinking) {
+thinking.remove();
+}
+}
+
+
+/* =========================================
+SOL COMMANDS
+========================================= */
+
+function askSol() {
+
+const input =
+document.getElementById("userInput");
+
+const text =
+input.value.trim();
+
+if (!text) return;
+
+addUserMessage(text);
+
+input.value = "";
+
+const command =
+text.toLowerCase();
+
+addThinking();
+
+
+setTimeout(() => {
+
+removeThinking();
+
+
+/* GREETINGS */
+
+if (
+command === "hello" ||
+command === "hi" ||
+command === "hey" ||
+command === "hiya"
+) {
+
+addSolMessage(
+"Hello! How can I help you?"
+);
+
+return;
+}
+
+
+/* HOW ARE YOU */
+
+if (
+command.includes("how are you") ||
+command.includes("how are u")
+) {
+
+addSolMessage(
+"I’m doing great, thank you for asking!"
+);
+
+return;
+}
+
+
+/* NAME */
+
+if (
+command.includes("your name") ||
+command === "who are you"
+) {
+
+addSolMessage(
+"My name is Sol."
+);
+
+return;
+}
+
+
+/* WHAT CAN YOU DO */
+
+if (
+command.includes("what can you do") ||
+command === "what do you do"
+) {
+
+addSolMessage(
+"I can answer simple questions, tell you the date and time, and help you search the web."
+);
+
+return;
+}
+
+
+/* WHAT IS SOL */
+
+if (
+command === "what is sol" ||
+command === "who is sol"
+) {
+
+addSolMessage(
+"I’m Sol, your personal assistant."
+);
+
+return;
+}
+
+
+/* ARE YOU REAL */
+
+if (
+command === "are you real" ||
+command === "are you a real person"
+) {
+
+addSolMessage(
+"I’m a virtual assistant, not a person."
+);
+
+return;
+}
+
+
+/* HELP */
+
+if (command === "help") {
+
+addSolMessage(
+"You can ask me about the date, time, my name, or try asking me something else."
+);
+
+return;
+}
+
+
+/* DATE */
+
+if (
+command.includes("what's the date") ||
+command.includes("what is the date") ||
+command === "date" ||
+command.includes("what day is it") ||
+command === "today"
+) {
+
+const today =
+new Date();
+
+const date =
+today.toLocaleDateString(
+undefined,
+{
+weekday: "long",
+month: "long",
+day: "numeric",
+year: "numeric"
+}
+);
+
+addSolMessage(
+"Today is " + date + "."
+);
+
+return;
+}
+
+
+/* TIME */
+
+if (
+command.includes("what time is it") ||
+command === "time" ||
+command.includes("what's the time") ||
+command.includes("what is the time")
+) {
+
+const now =
+new Date();
+
+const time =
+now.toLocaleTimeString(
+undefined,
+{
+hour: "numeric",
+minute: "2-digit"
+}
+);
+
+addSolMessage(
+"It’s " + time + "."
+);
+
+return;
+}
+
+
+/* GOOD MORNING */
+
+if (command.includes("good morning")) {
+
+addSolMessage(
+"Good morning! ☀️"
+);
+
+return;
+}
+
+
+/* GOOD AFTERNOON */
+
+if (command.includes("good afternoon")) {
+
+addSolMessage(
+"Good afternoon!"
+);
+
+return;
+}
+
+
+/* GOOD EVENING */
+
+if (command.includes("good evening")) {
+
+addSolMessage(
+"Good evening!"
+);
+
+return;
+}
+
+
+/* GOOD NIGHT */
+
+if (
+command === "good night" ||
+command === "goodnight"
+) {
+
+addSolMessage(
+"Good night!"
+);
+
+return;
+}
+
+
+/* GOODBYE */
+
+if (
+command === "bye" ||
+command === "goodbye"
+) {
+
+addSolMessage(
+"Goodbye! ☀️"
+);
+
+return;
+}
+
+
+/* THANK YOU */
+
+if (
+command === "thanks" ||
+command === "thank you" ||
+command.includes("thanks sol")
+) {
+
+addSolMessage(
+"You’re welcome!"
+);
+
+return;
+}
+
+
+/* JOKE */
+
+if (
+command.includes("tell me a joke") ||
+command === "joke"
+) {
+
+addSolMessage(
+"Why did the computer go to the doctor? Because it had a virus! 😄"
+);
+
+return;
+}
+
+
+/* VERSION */
+
+if (
+command === "version" ||
+command === "sol version"
+) {
+
+addSolMessage(
+"Sol | Version 3.0 Special Edition | Made in New York | Sol ™"
+);
+
+return;
+}
+
+
+/* UNKNOWN COMMAND */
+
+const encodedQuery =
+encodeURIComponent(text);
+
+addSolMessage(
+"I’m not sure how to help with that, " +
+'<a class="searchLink" href="https://www.google.com/search?q=' +
+encodedQuery +
+'" target="_blank">' +
+"click here to search the web" +
+"</a>."
+);
+
+}, 900);
+}
+
+
+/* =========================================
+ENTER KEY
+========================================= */
+
+document
+.getElementById("userInput")
+.addEventListener("keydown", function(event) {
+
+if (event.key === "Enter") {
+askSol();
+}
+
+});
+
+
+/* =========================================
+HELPERS
+========================================= */
+
+function scrollDown() {
+
+const conversation =
+document.getElementById("conversation");
+
+conversation.scrollTop =
+conversation.scrollHeight;
+}
+
+
+function escapeHTML(text) {
+
+const div =
+document.createElement("div");
+
+div.textContent = text;
+
+return div.innerHTML;
+}
+
+</script>
+
+</body>
+</html>
