@@ -1512,13 +1512,12 @@ const encodedQuery =
 encodeURIComponent(text);
 
 addSolMessage(
+"I’m not sure how to help with that, " +
 '<a class="searchLink" href="https://www.google.com/search?q=' +
 encodedQuery +
 '" target="_blank">' +
-'Click here to see what I found on the web for "' +
-escapeHTML(text) +
-'".' +
-"</a>"
+"click here to search the web" +
+"</a>."
 );
 
 }, 900);
