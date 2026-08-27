@@ -45,10 +45,8 @@ margin-bottom: 25px;
 font-size: 32px;
 line-height: 1.35;
 min-height: 45px;
-
 opacity: 1;
 transform: translateY(0);
-
 transition:
 opacity 0.3s ease,
 transform 0.3s ease;
@@ -113,43 +111,33 @@ position: fixed;
 bottom: 0;
 left: 0;
 width: 100%;
-
 padding: 20px 60px 30px;
-
 background: rgba(255,255,255,0.97);
 }
 
 .inputBox {
 max-width: 900px;
-
 display: flex;
 align-items: center;
-
 border-bottom: 1px solid #aaa;
 }
 
 input {
 flex: 1;
-
 border: none;
 outline: none;
-
 background: transparent;
-
 font-family: inherit;
 font-size: 21px;
 font-weight: 300;
-
 padding: 12px 0;
 }
 
 button {
 border: none;
 background: transparent;
-
 font-family: inherit;
 font-size: 18px;
-
 cursor: pointer;
 }
 
@@ -158,7 +146,6 @@ color: #b38c00;
 }
 
 @keyframes swipeUp {
-
 from {
 opacity: 0;
 transform: translateY(70px);
@@ -168,11 +155,9 @@ to {
 opacity: 1;
 transform: translateY(0);
 }
-
 }
 
 @keyframes messageUp {
-
 from {
 opacity: 0;
 transform: translateY(15px);
@@ -182,11 +167,9 @@ to {
 opacity: 1;
 transform: translateY(0);
 }
-
 }
 
 @keyframes thinkingPulse {
-
 0%, 100% {
 opacity: 0.45;
 }
@@ -194,7 +177,6 @@ opacity: 0.45;
 50% {
 opacity: 1;
 }
-
 }
 
 @media (max-width: 600px) {
@@ -225,7 +207,6 @@ font-size: 26px;
 .messageText {
 font-size: 22px;
 }
-
 }
 </style>
 </head>
@@ -284,7 +265,6 @@ let waitingIndex = 0;
 
 const welcome =
 document.getElementById("welcome");
-
 
 setInterval(() => {
 
@@ -366,7 +346,7 @@ scrollDown();
 
 
 /* =========================================
-THINKING PAUSE
+THINKING
 ========================================= */
 
 function addThinking() {
@@ -426,15 +406,18 @@ const message =
 document.createElement("div");
 
 message.className = "message";
-
 message.id = "timerMessage";
 
 message.innerHTML = `
 <div class="sender">Sol</div>
+
 <div class="messageText">
-Timer set for ${minutes} minute${minutes === 1 ? "" : "s"}.
+Timer set for ${minutes}
+minute${minutes === 1 ? "" : "s"}.
 </div>
-<div id="timerDisplay" class="timerDisplay">
+
+<div id="timerDisplay"
+class="timerDisplay">
 ${minutes}:00
 </div>
 `;
@@ -476,7 +459,6 @@ display.textContent =
 minutes +
 ":" +
 String(seconds).padStart(2, "0");
-
 }
 
 if (remaining <= 0) {
@@ -495,16 +477,101 @@ addSolMessage(
 
 if ("Notification" in window) {
 
-if (Notification.permission === "granted") {
+if (
+Notification.permission ===
+"granted"
+) {
 
 new Notification("Sol", {
-body: "Your timer is done!"
+body:
+"Your timer is done!"
 });
-
+}
+}
+}
 }
 
+
+function cancelTimer() {
+
+if (timerInterval) {
+
+clearInterval(timerInterval);
+
+timerInterval = null;
+
+timerEndTime = null;
+
+const timer =
+document.getElementById(
+"timerMessage"
+);
+
+if (timer) {
+timer.remove();
 }
 
+addSolMessage(
+"Timer cancelled."
+);
+
+return true;
+}
+
+return false;
+}
+
+
+/* =========================================
+RANDOM / FUN
+========================================= */
+
+function randomNumber() {
+
+return Math.floor(
+Math.random() * 100
+) + 1;
+}
+
+
+/* =========================================
+CALCULATOR
+========================================= */
+
+function calculateExpression(expression) {
+
+try {
+
+/*
+Only allow numbers and basic
+mathematical operators.
+*/
+
+if (!/^[0-9+\-*/().%\s]+$/.test(expression)) {
+return null;
+}
+
+const result =
+Function(
+'"use strict"; return (' +
+expression.replace(
+/%/g,
+"/100"
+) +
+")"
+)();
+
+if (
+typeof result !== "number" ||
+!isFinite(result)
+) {
+return null;
+}
+
+return result;
+
+} catch {
+return null;
 }
 }
 
@@ -528,24 +595,26 @@ addUserMessage(text);
 input.value = "";
 
 const command =
-text.toLowerCase();
+text.toLowerCase().trim();
 
 addThinking();
-
 
 setTimeout(() => {
 
 removeThinking();
 
 
-/* GREETINGS */
+/* ================================
+GREETINGS
+================================= */
 
 if (
 command === "hello" ||
 command === "hi" ||
 command === "hey" ||
 command === "hiya" ||
-command === "hey sol"
+command === "hey sol" ||
+command === "hello sol"
 ) {
 
 addSolMessage(
@@ -556,7 +625,9 @@ return;
 }
 
 
-/* HOW ARE YOU */
+/* ================================
+HOW ARE YOU
+================================= */
 
 if (
 command.includes("how are you") ||
@@ -571,7 +642,9 @@ return;
 }
 
 
-/* NAME */
+/* ================================
+NAME
+================================= */
 
 if (
 command.includes("your name") ||
@@ -586,22 +659,27 @@ return;
 }
 
 
-/* WHAT CAN YOU DO */
+/* ================================
+WHAT CAN YOU DO
+================================= */
 
 if (
 command.includes("what can you do") ||
-command === "what do you do"
+command === "what do you do" ||
+command === "what can i ask you"
 ) {
 
 addSolMessage(
-"I can answer simple questions, tell you the date and time, set a 1–5 minute timer, and help you search the web."
+"I can answer simple questions, tell you the date and time, set 1–5 minute timers, perform simple calculations, and help you search the web."
 );
 
 return;
 }
 
 
-/* WHAT IS SOL */
+/* ================================
+WHAT IS SOL
+================================= */
 
 if (
 command === "what is sol" ||
@@ -616,7 +694,43 @@ return;
 }
 
 
-/* ARE YOU REAL */
+/* ================================
+ABOUT SOL
+================================= */
+
+if (
+command === "tell me about yourself" ||
+command === "tell me about sol"
+) {
+
+addSolMessage(
+"I’m Sol, a simple personal virtual assistant."
+);
+
+return;
+}
+
+
+/* ================================
+WHO MADE YOU
+================================= */
+
+if (
+command === "who made you" ||
+command === "who created you"
+) {
+
+addSolMessage(
+"I was created as Sol, a personal assistant."
+);
+
+return;
+}
+
+
+/* ================================
+AI / REAL
+================================= */
 
 if (
 command === "are you real" ||
@@ -631,62 +745,140 @@ return;
 }
 
 
-/* HELP */
-
-if (command === "help") {
+if (
+command === "are you an ai" ||
+command === "are you ai"
+) {
 
 addSolMessage(
-"You can ask me about the date, time, my name, set a timer from 1 to 5 minutes, or ask for my commands."
+"I’m a programmed virtual assistant. I don’t use AI to generate my responses."
 );
 
 return;
 }
 
 
-/* COMMANDS */
+if (
+command === "are you smart" ||
+command === "are you intelligent"
+) {
+
+addSolMessage(
+"I know what I’ve been programmed to know!"
+);
+
+return;
+}
+
+
+/* ================================
+HELP / COMMANDS
+================================= */
+
+if (
+command === "help" ||
+command === "i need help" ||
+command === "can you help" ||
+command === "can you help me"
+) {
+
+addSolMessage(
+"You can ask me about the date, time, Sol, timers, calculations, jokes, or ask me to show my commands."
+);
+
+return;
+}
+
 
 if (
 command === "commands" ||
 command === "list of commands" ||
-command === "command list"
+command === "command list" ||
+command === "show commands" ||
+command === "show me the commands" ||
+command === "list commands" ||
+command === "tell me the commands"
 ) {
 
 addSolMessage(`
+
 <strong>Sol's commands</strong><br><br>
 
-Hello / Hi / Hey Sol<br>
+<strong>Assistant</strong><br>
+Hello / Hi / Hey / Hey Sol<br>
 How are you?<br>
-What is your name?<br>
 Who are you?<br>
+What is your name?<br>
 What can you do?<br>
 What is Sol?<br>
+Tell me about yourself<br>
+Who made you?<br>
 Are you real?<br>
-Help<br>
+Are you an AI?<br>
+Are you smart?<br>
+Help<br><br>
+
+<strong>Date & Time</strong><br>
 What's the date?<br>
 What day is it?<br>
+What month is it?<br>
+What year is it?<br>
 What time is it?<br>
+Time<br><br>
+
+<strong>Timers</strong><br>
+Set a timer for 1 minute<br>
+Set a timer for 2 minutes<br>
+Set a timer for 3 minutes<br>
+Set a timer for 4 minutes<br>
+Set a timer for 5 minutes<br>
+Stop / Cancel<br><br>
+
+<strong>Fun</strong><br>
+Tell me a joke<br>
+Another joke<br>
+Tell me a fact<br>
+Surprise me<br>
+Flip a coin<br>
+Heads or tails<br>
+Roll a die<br>
+Pick a number<br>
+Random number<br>
+Say something<br>
+Make me laugh<br>
+Entertain me<br><br>
+
+<strong>Math</strong><br>
+Calculate 5 + 5<br>
+What is 10 minus 5?<br>
+What is 5 times 5?<br>
+What is 10 divided by 2?<br><br>
+
+<strong>Other</strong><br>
 Good morning<br>
 Good afternoon<br>
 Good evening<br>
 Good night<br>
 Goodbye / Bye<br>
 Thanks / Thank you<br>
-Tell me a joke<br>
-Version<br>
-Set a timer for 1–5 minutes
+Version
+
 `);
 
 return;
 }
 
 
-/* DATE */
+/* ================================
+DATE
+================================= */
 
 if (
 command.includes("what's the date") ||
 command.includes("what is the date") ||
 command === "date" ||
 command.includes("what day is it") ||
+command.includes("what day is today") ||
 command === "today"
 ) {
 
@@ -712,7 +904,53 @@ return;
 }
 
 
-/* TIME */
+/* ================================
+MONTH
+================================= */
+
+if (
+command === "what month is it" ||
+command === "what month is this"
+) {
+
+const month =
+new Date().toLocaleDateString(
+undefined,
+{
+month: "long"
+}
+);
+
+addSolMessage(
+"It’s " + month + "."
+);
+
+return;
+}
+
+
+/* ================================
+YEAR
+================================= */
+
+if (
+command === "what year is it" ||
+command === "what year is this"
+) {
+
+addSolMessage(
+"It’s " +
+new Date().getFullYear() +
+"."
+);
+
+return;
+}
+
+
+/* ================================
+TIME
+================================= */
 
 if (
 command.includes("what time is it") ||
@@ -741,7 +979,9 @@ return;
 }
 
 
-/* TIMER */
+/* ================================
+TIMER
+================================= */
 
 const timerMatch =
 command.match(
@@ -753,7 +993,10 @@ if (timerMatch) {
 const minutes =
 parseInt(timerMatch[1]);
 
-if (minutes >= 1 && minutes <= 5) {
+if (
+minutes >= 1 &&
+minutes <= 5
+) {
 
 startTimer(minutes);
 
@@ -770,9 +1013,36 @@ return;
 }
 
 
-/* GOOD MORNING */
+/* ================================
+CANCEL TIMER
+================================= */
 
-if (command.includes("good morning")) {
+if (
+command === "stop" ||
+command === "cancel" ||
+command === "cancel timer" ||
+command === "stop timer" ||
+command === "never mind"
+) {
+
+if (!cancelTimer()) {
+
+addSolMessage(
+"There isn't an active timer."
+);
+}
+
+return;
+}
+
+
+/* ================================
+GOOD MORNING
+================================= */
+
+if (
+command.includes("good morning")
+) {
 
 addSolMessage(
 "Good morning! ☀️"
@@ -782,9 +1052,13 @@ return;
 }
 
 
-/* GOOD AFTERNOON */
+/* ================================
+GOOD AFTERNOON
+================================= */
 
-if (command.includes("good afternoon")) {
+if (
+command.includes("good afternoon")
+) {
 
 addSolMessage(
 "Good afternoon!"
@@ -794,9 +1068,13 @@ return;
 }
 
 
-/* GOOD EVENING */
+/* ================================
+GOOD EVENING
+================================= */
 
-if (command.includes("good evening")) {
+if (
+command.includes("good evening")
+) {
 
 addSolMessage(
 "Good evening!"
@@ -806,7 +1084,9 @@ return;
 }
 
 
-/* GOOD NIGHT */
+/* ================================
+GOOD NIGHT
+================================= */
 
 if (
 command === "good night" ||
@@ -821,7 +1101,9 @@ return;
 }
 
 
-/* GOODBYE */
+/* ================================
+GOODBYE
+================================= */
 
 if (
 command === "bye" ||
@@ -836,7 +1118,9 @@ return;
 }
 
 
-/* THANK YOU */
+/* ================================
+THANK YOU
+================================= */
 
 if (
 command === "thanks" ||
@@ -852,26 +1136,364 @@ return;
 }
 
 
-/* JOKE */
+/* ================================
+YOU'RE WELCOME
+================================= */
 
 if (
-command.includes("tell me a joke") ||
-command === "joke"
+command === "you're welcome" ||
+command === "you are welcome"
 ) {
 
 addSolMessage(
-"Why did the computer go to the doctor? Because it had a virus! 😄"
+"Thank you!"
 );
 
 return;
 }
 
 
-/* VERSION */
+/* ================================
+JOKES
+================================= */
+
+if (
+command.includes("tell me a joke") ||
+command === "joke" ||
+command === "make me laugh"
+) {
+
+const jokes = [
+"Why did the computer go to the doctor? Because it had a virus! 😄",
+"Why was the computer cold? It left its Windows open! 😄",
+"Why did the computer get glasses? It wanted to improve its web sight! 😄"
+];
+
+addSolMessage(
+jokes[
+Math.floor(
+Math.random() *
+jokes.length
+)
+]
+);
+
+return;
+}
+
+
+/* ================================
+ANOTHER JOKE
+================================= */
+
+if (
+command === "another joke"
+) {
+
+addSolMessage(
+"Why did the computer get glasses? It wanted to improve its web sight! 😄"
+);
+
+return;
+}
+
+
+/* ================================
+FACT
+================================= */
+
+if (
+command === "tell me a fact" ||
+command === "fact"
+) {
+
+addSolMessage(
+"A day on Venus is longer than a year on Venus."
+);
+
+return;
+}
+
+
+/* ================================
+SURPRISE
+================================= */
+
+if (
+command === "surprise me"
+) {
+
+addSolMessage(
+"Here’s a surprise: octopuses have three hearts! 🐙"
+);
+
+return;
+}
+
+
+/* ================================
+COIN FLIP
+================================= */
+
+if (
+command === "flip a coin" ||
+command === "heads or tails"
+) {
+
+const result =
+Math.random() < 0.5
+? "Heads!"
+: "Tails!";
+
+addSolMessage(result);
+
+return;
+}
+
+
+/* ================================
+DIE
+================================= */
+
+if (
+command === "roll a die" ||
+command === "roll the dice"
+) {
+
+const result =
+Math.floor(
+Math.random() * 6
+) + 1;
+
+addSolMessage(
+"You rolled a " +
+result +
+"."
+);
+
+return;
+}
+
+
+/* ================================
+RANDOM NUMBER
+================================= */
+
+if (
+command === "pick a number" ||
+command === "random number"
+) {
+
+addSolMessage(
+"How about " +
+randomNumber() +
+"?"
+);
+
+return;
+}
+
+
+/* ================================
+SAY SOMETHING
+================================= */
+
+if (
+command === "say something" ||
+command === "tell me something"
+) {
+
+addSolMessage(
+"Hello from Sol! ☀️"
+);
+
+return;
+}
+
+
+/* ================================
+ENTERTAIN
+================================= */
+
+if (
+command === "entertain me"
+) {
+
+addSolMessage(
+"Here I am! ☀️ What would you like to ask?"
+);
+
+return;
+}
+
+
+/* ================================
+SOL PERSONALITY
+================================= */
+
+if (
+command === "do you like me"
+) {
+
+addSolMessage(
+"Of course! ☀️"
+);
+
+return;
+}
+
+
+if (
+command === "are you my assistant"
+) {
+
+addSolMessage(
+"Yes. I’m Sol, your personal assistant."
+);
+
+return;
+}
+
+
+if (
+command === "are you listening" ||
+command === "can you hear me"
+) {
+
+addSolMessage(
+"I’m listening."
+);
+
+return;
+}
+
+
+if (
+command === "wake up" ||
+command === "hey there"
+) {
+
+addSolMessage(
+"I’m here. How can I help you?"
+);
+
+return;
+}
+
+
+if (
+command === "nice to meet you"
+) {
+
+addSolMessage(
+"Nice to meet you too!"
+);
+
+return;
+}
+
+
+/* ================================
+FAVORITE COLOR
+================================= */
+
+if (
+command === "what is your favorite color" ||
+command === "do you have a favorite color"
+) {
+
+addSolMessage(
+"Yellow. ☀️"
+);
+
+return;
+}
+
+
+/* ================================
+CALCULATOR
+================================= */
+
+let mathExpression = null;
+
+const calculateMatch =
+command.match(
+/^calculate\s+(.+)$/
+);
+
+if (calculateMatch) {
+mathExpression =
+calculateMatch[1];
+}
+
+
+if (!mathExpression) {
+
+const whatIsMatch =
+command.match(
+/^what is\s+(.+)$/
+);
+
+if (
+whatIsMatch &&
+/[0-9]/.test(
+whatIsMatch[1]
+)
+) {
+mathExpression =
+whatIsMatch[1]
+.replace(
+/plus/g,
+"+"
+)
+.replace(
+/minus/g,
+"-"
+)
+.replace(
+/times/g,
+"*"
+)
+.replace(
+/multiplied by/g,
+"*"
+)
+.replace(
+/divided by/g,
+"/"
+);
+}
+}
+
+
+if (mathExpression) {
+
+const result =
+calculateExpression(
+mathExpression
+);
+
+if (result !== null) {
+
+addSolMessage(
+"The answer is " +
+result +
+"."
+);
+
+return;
+}
+}
+
+
+/* ================================
+VERSION
+================================= */
 
 if (
 command === "version" ||
-command === "sol version"
+command === "sol version" ||
+command === "what is your version"
 ) {
 
 addSolMessage(
@@ -882,7 +1504,9 @@ return;
 }
 
 
-/* UNKNOWN COMMAND */
+/* ================================
+UNKNOWN COMMAND / WEB
+================================= */
 
 const encodedQuery =
 encodeURIComponent(text);
@@ -906,13 +1530,16 @@ ENTER KEY
 
 document
 .getElementById("userInput")
-.addEventListener("keydown", function(event) {
+.addEventListener(
+"keydown",
+function(event) {
 
 if (event.key === "Enter") {
 askSol();
 }
 
-});
+}
+);
 
 
 /* =========================================
@@ -922,7 +1549,9 @@ HELPERS
 function scrollDown() {
 
 const conversation =
-document.getElementById("conversation");
+document.getElementById(
+"conversation"
+);
 
 conversation.scrollTop =
 conversation.scrollHeight;
