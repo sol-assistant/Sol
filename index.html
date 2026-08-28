@@ -1508,44 +1508,18 @@ return;
 UNKNOWN COMMAND / WEB
 ================================= */
 
-=======================================
-OVERRIDE ASK SOL
-========================================= */
-askSol = function() {
-const input =
-document.getElementById("userInput");
-const text =
-input.value.trim();
-if (!text) return;
-/*
-Let the new smart system try first.
-If it doesn't recognize the command,
-the original Sol 3.0 system handles it.
-*/
-input.value = "";
-addUserMessage(text);
-addThinking();
-setTimeout(async () => {
-removeThinking();
-const handled =
-await solSmartCommand(text);
-if (!handled) {
-/*
-Recreate the original behavior by
-temporarily putting the text back into
-the input and calling the original
-Sol 3.0 function.
-*/
-input.value = text;
-removeLastDuplicateUserMessage();
-originalAskSol();
-}, 900);
-}
+addSolMessage(
+"I’m not sure how to help with that yet."
+);
+
+} // end of original askSol
 
 
 /* =========================================
 ENTER KEY
 ========================================= */
+
+
 
 document
 .getElementById("userInput")
@@ -2081,36 +2055,42 @@ return false;
 /* =========================================
 OVERRIDE ASK SOL
 ========================================= */
+
 askSol = function() {
+
 const input =
 document.getElementById("userInput");
+
 const text =
 input.value.trim();
+
 if (!text) return;
-/*
-Let the new smart system try first.
-If it doesn't recognize the command,
-the original Sol 3.0 system handles it.
-*/
+
 input.value = "";
+
 addUserMessage(text);
+
 addThinking();
+
 setTimeout(async () => {
+
 removeThinking();
+
 const handled =
 await solSmartCommand(text);
+
 if (!handled) {
-/*
-Recreate the original behavior by
-temporarily putting the text back into
-the input and calling the original
-Sol 3.0 function.
-*/
-input.value = text;
+
 removeLastDuplicateUserMessage();
+
+input.value = text;
+
 originalAskSol();
+
 }
+
 }, 300);
+
 };
 /* =========================================
 REMOVE DUPLICATE USER MESSAGE
