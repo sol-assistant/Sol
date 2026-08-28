@@ -1503,13 +1503,19 @@ addSolMessage(
 return;
 }
 
-
 /* ================================
 UNKNOWN COMMAND / WEB
 ================================= */
 
 addSolMessage(
-"I’m not sure how to help with that yet."
+"I found something that may help: " +
+'<a class="searchLink" href="https://www.google.com/search?q=' +
+encodeURIComponent(text) +
+'" target="_blank">' +
+"click here to see what I found on the web for “" +
+escapeHTML(text) +
+"”" +
+"</a>."
 );
 
 }, 300);
