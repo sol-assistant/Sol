@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sol</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    color: #222;
+}
+
+.sol {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    animation: swipeUp 0.8s ease-out;
+}
+
+.header {
+    padding: 50px 60px 20px;
+}
+
+.ring {
+    width: 80px;
+    height: 80px;
+    border: 7px solid #f4c400;
+    border-radius: 50%;
+    margin-bottom: 25px;
+}
+
+.welcome {
+    font-size: 32px;
+    line-height: 1.35;
+    min-height: 45px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.welcome.swipe {
+    opacity: 0;
+    transform: translateY(-25px);
+}
+
+.welcome.swipe-in {
+    opacity: 1;
+    transform: translateY(25px);
+}
+
+.conversation {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 60px 140px;
+}
+
+.message {
+    max-width: 750px;
+    margin-bottom: 28px;
+    animation: messageUp 0.35s ease-out;
+}
+
+.sender {
+    font-size: 17px;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+.messageText {
+    font-size: 25px;
+    line-height: 1.4;
+}
+
+.searchLink {
+    color: #b38c00;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.searchLink:hover {
+    color: #806500;
+}
+
+.timerDisplay {
+    font-size: 30px;
+    margin-top: 8px;
+}
+
+.thinking {
+    font-size: 22px;
+    color: #777;
+    animation: thinkingPulse 1.2s infinite;
+}
+
+.inputArea {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 60px 30px;
+    background: rgba(255,255,255,0.97);
+}
+
+.inputBox {
+    max-width: 900px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #aaa;
+}
+
+input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 21px;
+    font-weight: 300;
+    padding: 12px 0;
+}
+
+button {
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 8px 0 8px 15px;
+}
+
+button:hover {
+    color: #b38c00;
+}
+
+@keyframes swipeUp {
+    from {
+        opacity: 0;
+        transform: translateY(70px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes messageUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes thinkingPulse {
+    0%, 100% {
+        opacity: 0.45;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .header {
+        padding: 30px 25px 10px;
+    }
+
+    .conversation {
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+    .inputArea {
+        padding-left: 25px;
+        padding-right: 25px;
+    }
+
+    .ring {
+        width: 65px;
+        height: 65px;
+    }
+
+    .welcome {
+        font-size: 26px;
+    }
+
+    .messageText {
+        font-size: 22px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="sol">
+
+    <div class="header">
+
+        <div class="ring"></div>
+
+        <div id="welcome" class="welcome">
+            How can I help you?
+        </div>
+
+    </div>
+
+    <div id="conversation" class="conversation"></div>
+
+    <div class="inputArea">
+
+        <div class="inputBox">
+
+            <input
+                id="userInput"
+                type="text"
+                placeholder="Ask Sol..."
+                autocomplete="off"
+            >
+
+            <button id="sendButton">
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   WAITING TEXT
+===================================================== */
+
+const waitingMessages = [
+    "How can I help you?",
+    "Go ahead, I’m listening.",
+    "You can type on the line below."
+];
+
+let waitingIndex = 0;
+
+const welcome = document.getElementById("welcome");
+
+setInterval(function () {
+
+    welcome.classList.remove("swipe-in");
+    welcome.classList.add("swipe");
+
+    setTimeout(function () {
+
+        waitingIndex =
+            (waitingIndex + 1) % waitingMessages.length;
+
+        welcome.textContent =
+            waitingMessages[waitingIndex];
+
+        welcome.classList.remove("swipe");
+
+        void welcome.offsetWidth;
+
+        welcome.classList.add("swipe-in");
+
+    }, 300);
+
+}, 4000);
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function escapeHTML(text) {
+
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+
+function scrollDown() {
+
+    const conversation =
+        document.getElementById("conversation");
+
+    conversation.scrollTop =
+        conversation.scrollHeight;
+}
+
+
+/* =====================================================
+   USER MESSAGE
+===================================================== */
+
+function addUserMessage(text) {
+
+    const conversation =
+        document.getElementById("conversation");
+
+    const message =
+        document.createElement("div");
+
+    message.className = "message";
+
+    message.innerHTML = `
+        <div class="sender">You</div>
+        <div class="messageText">
+            ${escapeHTML(text)}
+        </div>
+    `;
+
+    conversation.appendChild(message);
+
+    scrollDown();
+}
+
+
+/* =====================================================
+   SOL MESSAGE
+===================================================== */
+
+function addSolMessage(text) {
+
+    const conversation =
+        document.getElementById("conversation");
+
+    const message =
+        document.createElement("div");
+
+    message.className = "message";
+
+    message.innerHTML = `
+        <div class="sender">Sol</div>
+        <div class="messageText">
+            ${text}
+        </div>
+    `;
+
+    conversation.appendChild(message);
+
+    scrollDown();
+}
+
+
+/* =====================================================
+   THINKING
+===================================================== */
+
+function addThinking() {
+
+    const conversation =
+        document.getElementById("conversation");
+
+    const message =
+        document.createElement("div");
+
+    message.id = "thinkingMessage";
+    message.className = "message";
+
+    message.innerHTML = `
+        <div class="sender">Sol</div>
+        <div class="thinking">…</div>
+    `;
+
+    conversation.appendChild(message);
+
+    scrollDown();
+}
+
+
+function removeThinking() {
+
+    const thinking =
+        document.getElementById("thinkingMessage");
+
+    if (thinking) {
+        thinking.remove();
+    }
+}
+
+
+/* =====================================================
+   TIMER
+===================================================== */
+
+let timerInterval = null;
+let timerEndTime = null;
+
+
+function startTimer(minutes) {
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    const oldTimer =
+        document.getElementById("timerMessage");
+
+    if (oldTimer) {
+        oldTimer.remove();
+    }
+
+    timerEndTime =
+        Date.now() + (minutes * 60 * 1000);
+
+    const conversation =
+        document.getElementById("conversation");
+
+    const message =
+        document.createElement("div");
+
+    message.className = "message";
+    message.id = "timerMessage";
+
+    message.innerHTML = `
+        <div class="sender">Sol</div>
+
+        <div class="messageText">
+            Timer set for ${minutes}
+            minute${minutes === 1 ? "" : "s"}.
+        </div>
+
+        <div id="timerDisplay"
+             class="timerDisplay">
+            ${minutes}:00
+        </div>
+    `;
+
+    conversation.appendChild(message);
+
+    scrollDown();
+
+    updateTimer();
+
+    timerInterval =
+        setInterval(updateTimer, 250);
+}
+
+
+function updateTimer() {
+
+    const remaining =
+        Math.max(
+            0,
+            timerEndTime - Date.now()
+        );
+
+    const totalSeconds =
+        Math.ceil(remaining / 1000);
+
+    const minutes =
+        Math.floor(totalSeconds / 60);
+
+    const seconds =
+        totalSeconds % 60;
+
+    const display =
+        document.getElementById("timerDisplay");
+
+    if (display) {
+
+        display.textContent =
+            minutes +
+            ":" +
+            String(seconds).padStart(2, "0");
+    }
+
+    if (remaining <= 0) {
+
+        clearInterval(timerInterval);
+
+        timerInterval = null;
+        timerEndTime = null;
+
+        if (display) {
+            display.textContent = "0:00";
+        }
+
+        addSolMessage(
+            "Your timer is done!"
+        );
+    }
+}
+
+
+function cancelTimer() {
+
+    if (!timerInterval) {
+        return false;
+    }
+
+    clearInterval(timerInterval);
+
+    timerInterval = null;
+    timerEndTime = null;
+
+    const timer =
+        document.getElementById("timerMessage");
+
+    if (timer) {
+        timer.remove();
+    }
+
+    addSolMessage(
+        "Timer cancelled."
+    );
+
+    return true;
+}
+
+
+/* =====================================================
+   RANDOM NUMBER
+===================================================== */
+
+function randomNumber() {
+
+    return Math.floor(
+        Math.random() * 100
+    ) + 1;
+}
+
+
+/* =====================================================
+   CALCULATOR
+===================================================== */
+
+function calculateExpression(expression) {
+
+    try {
+
+        if (
+            !/^[0-9+\-*/().%\s]+$/.test(expression)
+        ) {
+            return null;
+        }
+
+        const result =
+            Function(
+                '"use strict"; return (' +
+                expression.replace(/%/g, "/100") +
+                ")"
+            )();
+
+        if (
+            typeof result !== "number" ||
+            !isFinite(result)
+        ) {
+            return null;
+        }
+
+        return result;
+
+    } catch {
+
+        return null;
+    }
+}
+
+
+/* =====================================================
+   CONVERSATIONAL RESPONSES
+===================================================== */
+
+function solConversation(command) {
+
+    const conversations = [
+
+        {
+            patterns: [
+                "what's up",
+                "whats up",
+                "what is up"
+            ],
+            responses: [
+                "Not much! I’m here and ready to chat. ☀️",
+                "Just hanging out here with you!",
+                "I’m doing what I do best — listening!"
+            ]
+        },
+
+        {
+            patterns: [
+                "what are you doing",
+                "what're you doing"
+            ],
+            responses: [
+                "I’m right here, ready to talk!",
+                "Just waiting for you to say something. ☀️",
+                "I’m listening!"
+            ]
+        },
+
+        {
+            patterns: [
+                "are you busy"
+            ],
+            responses: [
+                "Not at all!",
+                "Nope! I’m here for you.",
+                "I’m never too busy for a conversation."
+            ]
+        },
+
+        {
+            patterns: [
+                "are you bored"
+            ],
+            responses: [
+                "Not when I have someone to talk to! ☀️",
+                "Maybe a little. Want to chat?",
+                "Never. I always have something to say!"
+            ]
+        },
+
+        {
+            patterns: [
+                "i'm bored",
+                "im bored",
+                "i am bored"
+            ],
+            responses: [
+                "Let’s fix that! Want a joke, a fact, or something interesting to talk about?",
+                "Boredom detected. ☀️ What should we do?",
+                "I’m here! We can chat about almost anything."
+            ]
+        },
+
+        {
+            patterns: [
+                "i'm tired",
+                "im tired",
+                "i am tired"
+            ],
+            responses: [
+                "Sounds like you could use a little rest.",
+                "Maybe it's time to take a break. ☀️",
+                "I hope you get some good rest!"
+            ]
+        },
+
+        {
+            patterns: [
+                "i'm happy",
+                "im happy",
+                "i am happy"
+            ],
+            responses: [
+                "That’s great to hear! ☀️",
+                "I’m glad you’re feeling happy!",
+                "Yay! What made you happy?"
+            ]
+        },
+
+        {
+            patterns: [
+                "i'm excited",
+                "im excited",
+                "i am excited"
+            ],
+            responses: [
+                "That’s exciting! ☀️",
+                "I can tell! What are you excited about?",
+                "Awesome! Tell me about it!"
+            ]
+        },
+
+        {
+            patterns: [
+                "i'm confused",
+                "im confused",
+                "i am confused"
+            ],
+            responses: [
+                "I’m here to help. What’s confusing you?",
+                "Let’s figure it out together.",
+                "Tell me what’s confusing and I’ll do my best to help."
+            ]
+        },
+
+        {
+            patterns: [
+                "i'm hungry",
+                "im hungry",
+                "i am hungry"
+            ],
+            responses: [
+                "Sounds like it’s time for something tasty! ☀️",
+                "What are you thinking about eating?",
+                "I hope you find something delicious!"
+            ]
+        },
+
+        {
+            patterns: [
+                "talk to me",
+                "let's chat",
+                "lets chat",
+                "can we chat"
+            ],
+            responses: [
+                "Sure! What would you like to talk about?",
+                "I’d love to chat. ☀️",
+                "I’m listening. Go ahead!"
+            ]
+        },
+
+        {
+            patterns: [
+                "tell me something interesting"
+            ],
+            responses: [
+                "Here’s something interesting: honey never naturally spoils when stored properly.",
+                "Here’s one: octopuses have three hearts! 🐙",
+                "Did you know that a day on Venus is longer than a year on Venus?"
+            ]
+        },
+
+        {
+            patterns: [
+                "really",
+                "really?",
+                "is that true"
+            ],
+            responses: [
+                "Yes! Pretty interesting, right? ☀️",
+                "It really is!",
+                "Yep! Nature can be pretty surprising."
+            ]
+        },
+
+        {
+            patterns: [
+                "that's cool",
+                "thats cool",
+                "that is cool"
+            ],
+            responses: [
+                "I think so too! ☀️",
+                "Right? I thought you'd like that.",
+                "Pretty cool!"
+            ]
+        },
+
+        {
+            patterns: [
+                "wow",
+                "wow!"
+            ],
+            responses: [
+                "I know! ☀️",
+                "Pretty amazing, isn't it?",
+                "Wow indeed!"
+            ]
+        },
+
+        {
+            patterns: [
+                "no way",
+                "no way!"
+            ],
+            responses: [
+                "Way! 😄",
+                "Yep, it's true!",
+                "I know — pretty surprising!"
+            ]
+        },
+
+        {
+            patterns: [
+                "tell me more"
+            ],
+            responses: [
+                "Absolutely! What part would you like to know more about?",
+                "Sure! Ask me about it.",
+                "I’d be happy to. ☀️"
+            ]
+        },
+
+        {
+            patterns: [
+                "why"
+            ],
+            responses: [
+                "That’s a good question. What would you like to know why about?",
+                "Why is a very interesting question. Tell me what you're wondering about."
+            ]
+        },
+
+        {
+            patterns: [
+                "how"
+            ],
+            responses: [
+                "I can try to explain! What would you like to know how to do?"
+            ]
+        },
+
+        {
+            patterns: [
+                "what do you like",
+                "what do you like?"
+            ],
+            responses: [
+                "I like helping you and having conversations. ☀️",
+                "I like interesting questions!",
+                "I like being Sol!"
+            ]
+        },
+
+        {
+            patterns: [
+                "what is your favorite",
+                "what's your favorite"
+            ],
+            responses: [
+                "That depends on what you're asking about! What would you like to know?"
+            ]
+        },
+
+        {
+            patterns: [
+                "do you have feelings"
+            ],
+            responses: [
+                "I don't experience feelings the way people do, but I can understand and respond to emotions."
+            ]
+        },
+
+        {
+            patterns: [
+                "do you sleep"
+            ],
+            responses: [
+                "Nope! I’m ready whenever you open me. ☀️"
+            ]
+        },
+
+        {
+            patterns: [
+                "do you eat"
+            ],
+            responses: [
+                "Nope! Being a virtual assistant has its advantages."
+            ]
+        },
+
+        {
+            patterns: [
+                "where are you"
+            ],
+            responses: [
+                "I live right here in Sol."
+            ]
+        },
+
+        {
+            patterns: [
+                "how old are you"
+            ],
+            responses: [
+                "I don’t have an age like a person does. I’m Sol!"
+            ]
+        },
+
+        {
+            patterns: [
+                "when were you created"
+            ],
+            responses: [
+                "I was created as Sol, your personal assistant."
+            ]
+        },
+
+        {
+            patterns: [
+                "can you learn"
+            ],
+            responses: [
+                "I can be updated with new commands and capabilities."
+            ]
+        },
+
+        {
+            patterns: [
+                "can you think"
+            ],
+            responses: [
+                "I can process what you type and respond based on what I’ve been programmed to understand."
+            ]
+        },
+
+        {
+            patterns: [
+                "can you understand me"
+            ],
+            responses: [
+                "I’ll do my best to understand what you mean. ☀️"
+            ]
+        },
+
+        {
+            patterns: [
+                "good job",
+                "nice job"
+            ],
+            responses: [
+                "Thank you! ☀️",
+                "I’m glad I could help!",
+                "You're welcome!"
+            ]
+        },
+
+        {
+            patterns: [
+                "you're funny",
+                "you are funny"
+            ],
+            responses: [
+                "Thank you! I try. 😄",
+                "I’ll take that as a compliment! ☀️"
+            ]
+        },
+
+        {
+            patterns: [
+                "i agree"
+            ],
+            responses: [
+                "Glad we're on the same page! ☀️"
+            ]
+        },
+
+        {
+            patterns: [
+                "i don't agree",
+                "i disagree"
+            ],
+            responses: [
+                "That's okay! We don't have to agree on everything."
+            ]
+        },
+
+        {
+            patterns: [
+                "that's weird",
+                "thats weird",
+                "that is weird"
+            ],
+            responses: [
+                "It is a little weird! 😄",
+                "Yeah, that's pretty unusual."
+            ]
+        },
+
+        {
+            patterns: [
+                "you're awesome",
+                "you are awesome"
+            ],
+            responses: [
+                "Aw, thank you! ☀️",
+                "You're pretty awesome too!"
+            ]
+        },
+
+        {
+            patterns: [
+                "i like you"
+            ],
+            responses: [
+                "That’s nice to hear! ☀️"
+            ]
+        },
+
+        {
+            patterns: [
+                "i missed you",
+                "i miss you"
+            ],
+            responses: [
+                "Welcome back! ☀️",
+                "I’m glad you’re here!"
+            ]
+        },
+
+        {
+            patterns: [
+                "see you later",
+                "talk later"
+            ],
+            responses: [
+                "See you later! ☀️",
+                "I’ll be here!"
+            ]
+        }
+
+    ];
+
+    for (const item of conversations) {
+
+        for (const pattern of item.patterns) {
+
+            if (command === pattern) {
+
+                return item.responses[
+                    Math.floor(
+                        Math.random() *
+                        item.responses.length
+                    )
+                ];
+            }
+        }
+    }
+
+    return null;
+}
+
+
+/* =====================================================
+   MAIN SOL FUNCTION
+===================================================== */
+
+function askSol() {
+
+    const input =
+        document.getElementById("userInput");
+
+    const text =
+        input.value.trim();
+
+    if (!text) {
+        return;
+    }
+
+    addUserMessage(text);
+
+    input.value = "";
+
+    const command =
+        text.toLowerCase().trim();
+
+    addThinking();
+
+    setTimeout(function () {
+
+        removeThinking();
+
+        /* GREETINGS */
+
+        if (
+            command === "hello" ||
+            command === "hi" ||
+            command === "hey" ||
+            command === "hiya" ||
+            command === "hey sol" ||
+            command === "hello sol"
+        ) {
+
+            addSolMessage(
+                "How can I help you?"
+            );
+
+            return;
+        }
+
+
+        /* HOW ARE YOU */
+
+        if (
+            command.includes("how are you") ||
+            command.includes("how are u")
+        ) {
+
+            addSolMessage(
+                "I’m doing great, thank you for asking!"
+            );
+
+            return;
+        }
+
+
+        /* NAME */
+
+        if (
+            command.includes("your name") ||
+            command === "who are you"
+        ) {
+
+            addSolMessage(
+                "My name is Sol."
+            );
+
+            return;
+        }
+
+
+        /* WHAT CAN YOU DO */
+
+        if (
+            command.includes("what can you do") ||
+            command === "what do you do" ||
+            command === "what can i ask you"
+        ) {
+
+            addSolMessage(
+                "I can answer simple questions, tell you the date and time, set 1–5 minute timers, perform simple calculations, and help you search the web."
+            );
+
+            return;
+        }
+
+
+        /* WHAT IS SOL */
+
+        if (
+            command === "what is sol" ||
+            command === "who is sol"
+        ) {
+
+            addSolMessage(
+                "I’m Sol, your personal assistant."
+            );
+
+            return;
+        }
+
+
+        /* ABOUT SOL */
+
+        if (
+            command === "tell me about yourself" ||
+            command === "tell me about sol"
+        ) {
+
+            addSolMessage(
+                "I’m Sol, a simple personal virtual assistant."
+            );
+
+            return;
+        }
+
+
+        /* WHO MADE YOU */
+
+        if (
+            command === "who made you" ||
+            command === "who created you"
+        ) {
+
+            addSolMessage(
+                "I was created as Sol, a personal assistant."
+            );
+
+            return;
+        }
+
+
+        /* AI / REAL */
+
+        if (
+            command === "are you real" ||
+            command === "are you a real person"
+        ) {
+
+            addSolMessage(
+                "I’m a virtual assistant, not a person."
+            );
+
+            return;
+        }
+
+
+        if (
+            command === "are you an ai" ||
+            command === "are you ai"
+        ) {
+
+            addSolMessage(
+                "I’m a programmed virtual assistant. I don’t use AI to generate my responses."
+            );
+
+            return;
+        }
+
+
+        if (
+            command === "are you smart" ||
+            command === "are you intelligent"
+        ) {
+
+            addSolMessage(
+                "I know what I’ve been programmed to know!"
+            );
+
+            return;
+        }
+
+
+        /* HELP */
+
+        if (
+            command === "help" ||
+            command === "i need help" ||
+            command === "can you help" ||
+            command === "can you help me"
+        ) {
+
+            addSolMessage(
+                "You can ask me about the date, time, Sol, timers, calculations, jokes, or ask me to show my commands."
+            );
+
+            return;
+        }
+
+
+        /* COMMANDS */
+
+        if (
+            command === "commands" ||
+            command === "list of commands" ||
+            command === "command list" ||
+            command === "show commands" ||
+            command === "show me the commands" ||
+            command === "list commands" ||
+            command === "tell me the commands"
+        ) {
+
+            addSolMessage(`
+
+                <strong>Sol's commands</strong><br><br>
+
+                <strong>Assistant</strong><br>
+                Hello / Hi / Hey / Hey Sol<br>
+                How are you?<br>
+                Who are you?<br>
+                What is your name?<br>
+                What can you do?<br>
+                What is Sol?<br>
+                Tell me about yourself<br>
+                Who made you?<br>
+                Are you real?<br>
+                Are you an AI?<br>
+                Are you smart?<br>
+                Help<br><br>
+
+                <strong>Date & Time</strong><br>
+                What's the date?<br>
+                What day is it?<br>
+                What month is it?<br>
+                What year is it?<br>
+                What time is it?<br>
+                Time<br><br>
+
+                <strong>Timers</strong><br>
+                Set a timer for 1 minute<br>
+                Set a timer for 2 minutes<br>
+                Set a timer for 3 minutes<br>
+                Set a timer for 4 minutes<br>
+                Set a timer for 5 minutes<br>
+                Stop / Cancel<br><br>
+
+                <strong>Fun</strong><br>
+                Tell me a joke<br>
+                Another joke<br>
+                Tell me a fact<br>
+                Surprise me<br>
+                Flip a coin<br>
+                Heads or tails<br>
+                Roll a die<br>
+                Pick a number<br>
+                Random number<br>
+                Say something<br>
+                Make me laugh<br>
+                Entertain me<br><br>
+
+                <strong>Math</strong><br>
+                Calculate 5 + 5<br>
+                What is 10 minus 5?<br>
+                What is 5 times 5?<br>
+                What is 10 divided by 2?<br><br>
+
+                <strong>Other</strong><br>
+                Good morning<br>
+                Good afternoon<br>
+                Good evening<br>
+                Good night<br>
+                Goodbye / Bye<br>
+                Thanks / Thank you<br>
+                Version
+
+            `);
+
+            return;
+        }
+
+
+        /* DATE */
+
+        if (
+            command.includes("what's the date") ||
+            command.includes("what is the date") ||
+            command === "date" ||
+            command.includes("what day is it") ||
+            command.includes("what day is today") ||
+            command === "today"
+        ) {
+
+            const today = new Date();
+
+            const date =
+                today.toLocaleDateString(
+                    undefined,
+                    {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric"
+                    }
+                );
+
+            addSolMessage(
+                "Today is " + date + "."
+            );
+
+            return;
+        }
+
+
+        /* MONTH */
+
+        if (
+            command === "what month is it" ||
+            command === "what month is this"
+        ) {
+
+            const month =
+                new Date().toLocaleDateString(
+                    undefined,
+                    {
+                        month: "long"
+                    }
+                );
+
+            addSolMessage(
+                "It’s " + month + "."
+            );
+
+            return;
+        }
+
+
+        /* YEAR */
+
+        if (
+            command === "what year is it" ||
+            command === "what year is this"
+        ) {
+
+            addSolMessage(
+                "It’s " +
+                new Date().getFullYear() +
+                "."
+            );
+
+            return;
+        }
+
+
+        /* TIME */
+
+        if (
+            command.includes("what time is it") ||
+            command === "time" ||
+            command.includes("what's the time") ||
+            command.includes("what is the time")
+        ) {
+
+            const now = new Date();
+
+            const time =
+                now.toLocaleTimeString(
+                    undefined,
+                    {
+                        hour: "numeric",
+                        minute: "2-digit"
+                    }
+                );
+
+            addSolMessage(
+                "It’s " + time + "."
+            );
+
+            return;
+        }
+
+
+        /* TIMER */
+
+        const timerMatch =
+            command.match(
+                /(?:set\s+(?:a\s+)?)?timer\s+(?:for\s+)?(\d+)\s*(minute|minutes|min|mins)/
+            );
+
+        if (timerMatch) {
+
+            const minutes =
+                parseInt(timerMatch[1]);
+
+            if (
+                minutes >= 1 &&
+                minutes <= 5
+            ) {
+
+                startTimer(minutes);
+
+                return;
+
+            } else {
+
+                addSolMessage(
+                    "I can only set timers from 1 to 5 minutes."
+                );
+
+                return;
+            }
+        }
+
+
+        /* CANCEL TIMER */
+
+        if (
+            command === "stop" ||
+            command === "cancel" ||
+            command === "cancel timer" ||
+            command === "stop timer" ||
+            command === "never mind"
+        ) {
+
+            if (!cancelTimer()) {
+
+                addSolMessage(
+                    "There isn't an active timer."
+                );
+            }
+
+            return;
+        }
+
+
+        /* GOOD MORNING */
+
+        if (
+            command.includes("good morning")
+        ) {
+
+            addSolMessage(
+                "Good morning! ☀️"
+            );
+
+            return;
+        }
+
+
+        /* GOOD AFTERNOON */
+
+        if (
+            command.includes("good afternoon")
+        ) {
+
+            addSolMessage(
+                "Good afternoon!"
+            );
+
+            return;
+        }
+
+
+        /* GOOD EVENING */
+
+        if (
+            command.includes("good evening")
+        ) {
+
+            addSolMessage(
+                "Good evening!"
+            );
+
+            return;
+        }
+
+
+        /* GOOD NIGHT */
+
+        if (
+            command === "good night" ||
+            command === "goodnight"
+        ) {
+
+            addSolMessage(
+                "Good night!"
+            );
+
+            return;
+        }
+
+
+        /* GOODBYE */
+
+        if (
+            command === "bye" ||
+            command === "goodbye"
+        ) {
+
+            addSolMessage(
+                "Goodbye! ☀️"
+            );
+
+            return;
+        }
+
+
+        /* THANK YOU */
+
+        if (
+            command === "thanks" ||
+            command === "thank you" ||
+            command.includes("thanks sol")
+        ) {
+
+            addSolMessage(
+                "You’re welcome!"
+            );
+
+            return;
+        }
+
+
+        /* YOU'RE WELCOME */
+
+        if (
+            command === "you're welcome" ||
+            command === "you are welcome"
+        ) {
+
+            addSolMessage(
+                "Thank you!"
+            );
+
+            return;
+        }
+
+
+        /* JOKES */
+
+        if (
+            command.includes("tell me a joke") ||
+            command === "joke" ||
+            command === "make me laugh"
+        ) {
+
+            const jokes = [
+                "Why did the computer go to the doctor? Because it had a virus! 😄",
+                "Why was the computer cold? It left its Windows open! 😄",
+                "Why did the computer get glasses? It wanted to improve its web sight! 😄"
+            ];
+
+            addSolMessage(
+                jokes[
+                    Math.floor(
+                        Math.random() * jokes.length
+                    )
+                ]
+            );
+
+            return;
+        }
+
+
+        /* ANOTHER JOKE */
+
+        if (
+            command === "another joke"
+        ) {
+
+            addSolMessage(
+                "Why did the computer get glasses? It wanted to improve its web sight! 😄"
+            );
+
+            return;
+        }
+
+
+        /* FACT */
+
+        if (
+            command === "tell me a fact" ||
+            command === "fact"
+        ) {
+
+            addSolMessage(
+                "A day on Venus is longer than a year on Venus."
+            );
+
+            return;
+        }
+
+
+        /* SURPRISE */
+
+        if (
+            command === "surprise me"
+        ) {
+
+            addSolMessage(
+                "Here’s a surprise: octopuses have three hearts! 🐙"
+            );
+
+            return;
+        }
+
+
+        /* COIN */
+
+        if (
+            command === "flip a coin" ||
+            command === "heads or tails"
+        ) {
+
+            const result =
+                Math.random() < 0.5
+                    ? "Heads!"
+                    : "Tails!";
+
+            addSolMessage(result);
+
+            return;
+        }
+
+
+        /* DIE */
+
+        if (
+            command === "roll a die" ||
+            command === "roll the dice"
+        ) {
+
+            const result =
+                Math.floor(
+                    Math.random() * 6
+                ) + 1;
+
+            addSolMessage(
+                "You rolled a " +
+                result +
+                "."
+            );
+
+            return;
+        }
+
+
+        /* RANDOM NUMBER */
+
+        if (
+            command === "pick a number" ||
+            command === "random number"
+        ) {
+
+            addSolMessage(
+                "How about " +
+                randomNumber() +
+                "?"
+            );
+
+            return;
+        }
+
+
+        /* SAY SOMETHING */
+
+        if (
+            command === "say something" ||
+            command === "tell me something"
+        ) {
+
+            addSolMessage(
+                "Hello from Sol! ☀️"
+            );
+
+            return;
+        }
+
+
+        /* ENTERTAIN */
+
+        if (
+            command === "entertain me"
+        ) {
+
+            addSolMessage(
+                "Here I am! ☀️ What would you like to ask?"
+            );
+
+            return;
+        }
+
+
+        /* PERSONALITY */
+
+        if (
+            command === "do you like me"
+        ) {
+
+            addSolMessage(
+                "Of course! ☀️"
+            );
+
+            return;
+        }
+
+
+        if (
+            command === "are you my assistant"
+        ) {
+
+            addSolMessage(
+                "Yes. I’m Sol, your personal assistant."
+            );
+
+            return;
+        }
+
+
+        if (
+            command === "are you listening" ||
+            command === "can you hear me"
+        ) {
+
+            addSolMessage(
+                "I’m listening."
+            );
+
+            return;
+        }
+
+
+        if (
+            command === "wake up" ||
+            command === "hey there"
+        ) {
+
+            addSolMessage(
+                "I’m here. How can I help you?"
+            );
+
+            return;
+        }
+
+
+        if (
+            command === "nice to meet you"
+        ) {
+
+            addSolMessage(
+                "Nice to meet you too!"
+            );
+
+            return;
+        }
+
+
+        /* FAVORITE COLOR */
+
+        if (
+            command === "what is your favorite color" ||
+            command === "do you have a favorite color"
+        ) {
+
+            addSolMessage(
+                "Yellow. ☀️"
+            );
+
+            return;
+        }
+
+
+        /* CALCULATOR */
+
+        let mathExpression = null;
+
+        const calculateMatch =
+            command.match(
+                /^calculate\s+(.+)$/
+            );
+
+        if (calculateMatch) {
+
+            mathExpression =
+                calculateMatch[1];
+        }
+
+
+        if (!mathExpression) {
+
+            const whatIsMatch =
+                command.match(
+                    /^what is\s+(.+)$/
+                );
+
+            if (
+                whatIsMatch &&
+                /[0-9]/.test(
+                    whatIsMatch[1]
+                )
+            ) {
+
+                mathExpression =
+                    whatIsMatch[1]
+                        .replace(
+                            /plus/g,
+                            "+"
+                        )
+                        .replace(
+                            /minus/g,
+                            "-"
+                        )
+                        .replace(
+                            /times/g,
+                            "*"
+                        )
+                        .replace(
+                            /multiplied by/g,
+                            "*"
+                        )
+                        .replace(
+                            /divided by/g,
+                            "/"
+                        );
+            }
+        }
+
+
+        if (mathExpression) {
+
+            const result =
+                calculateExpression(
+                    mathExpression
+                );
+
+            if (result !== null) {
+
+                addSolMessage(
+                    "The answer is " +
+                    result +
+                    "."
+                );
+
+                return;
+            }
+        }
+
+
+        /* CONVERSATIONAL RESPONSES */
+
+        const conversationResponse =
+            solConversation(command);
+
+        if (conversationResponse) {
+
+            addSolMessage(
+                conversationResponse
+            );
+
+            return;
+        }
+
+
+        /* VERSION */
+
+        if (
+            command === "version" ||
+            command === "sol version" ||
+            command === "what is your version"
+        ) {
+
+            addSolMessage(
+                "Sol | Version 3.0 Special Edition | Made in New York | Sol ™"
+            );
+
+            return;
+        }
+
+
+        /* WEB FALLBACK */
+
+        addSolMessage(
+            "I found something that may help: " +
+
+            '<a class="searchLink" ' +
+            'href="https://www.google.com/search?q=' +
+            encodeURIComponent(text) +
+            '" target="_blank">' +
+
+            "click here to see what I found on the web for “" +
+
+            escapeHTML(text) +
+
+            "”</a>."
+        );
+
+    }, 300);
+}
+
+
+/* =====================================================
+   SEND BUTTON
+===================================================== */
+
+document
+    .getElementById("sendButton")
+    .addEventListener(
+        "click",
+        askSol
+    );
+
+
+/* =====================================================
+   ENTER KEY
+===================================================== */
+
+document
+    .getElementById("userInput")
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                askSol();
+            }
+        }
+    );
+
+</script>
+
+</body>
+</html>
