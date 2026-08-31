@@ -1928,343 +1928,15 @@ div.textContent = text;
 return div.innerHTML;
 }
 /* =========================================
-SOL 3.0 SMART EXTENSION
-ADDED ON — ORIGINAL CODE UNCHANGED
+SOL 3.0 SMART FEATURES
 ========================================= */
-(function() {
-const originalAskSol = askSol;
-/* =========================================
-SMART WEB SEARCH
-========================================= */
-function solWebSearch(query) {
-const encoded =
-encodeURIComponent(query);
-addSolMessage(
-"I found something that may help: " +
-'<a class="searchLink" href="https://www.google.com/search?q=' +
-encoded +
-'" target="_blank">' +
-"click here to see what I found on the web for “" +
-escapeHTML(query) +
-"”" +
-"</a>."
-);
-}
-/* =========================================
-WIKIPEDIA SEARCH
-========================================= */
-async function solWikipedia(query) {
-try {
-const url =
-"https://en.wikipedia.org/api/rest_v1/page/summary/" +
-encodeURIComponent(query);
-const response =
-await fetch(url);
-if (!response.ok) {
-throw new Error();
-}
-const data =
-await response.json();
-if (data.extract) {
-let answer =
-data.extract;
-if (answer.length > 700) {
-answer =
-answer.substring(0, 700) +
-"...";
-}
-addSolMessage(
-answer +
-"<br><br>" +
-'<a class="searchLink" href="' +
-data.content_urls.desktop.page +
-'" target="_blank">' +
-"Read more on Wikipedia" +
-"</a>"
-);
-return true;
-}
-} catch (error) {
-return false;
-}
-return false;
-}
-/* =========================================
-WEATHER
-FREE OPEN-METEO SERVICE
-========================================= */
-async function solWeather() {
-try {
-const response =
-await fetch(
-"https://api.open-meteo.com/v1/forecast?latitude=40.7450&longitude=-73.0530&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph"
-);
-if (!response.ok) {
-throw new Error();
-}
-const data =
-await response.json();
-const current =
-data.current;
-const weatherCodes = {
-0: "Clear skies ☀️",
-1: "Mostly clear 🌤️",
-2: "Partly cloudy ⛅",
-3: "Cloudy ☁️",
-45: "Foggy 🌫️",
-48: "Foggy 🌫️",
-51: "Light drizzle 🌦️",
-53: "Drizzle 🌦️",
-55: "Heavy drizzle 🌧️",
-61: "Light rain 🌦️",
-63: "Rain 🌧️",
-65: "Heavy rain 🌧️",
-71: "Light snow 🌨️",
-73: "Snow 🌨️",
-75: "Heavy snow ❄️",
-80: "Rain showers 🌦️",
-81: "Rain showers 🌧️",
-82: "Heavy rain showers 🌧️",
-95: "Thunderstorms ⛈️",
-96: "Thunderstorms with hail ⛈️",
-99: "Thunderstorms with hail ⛈️"
-};
-const description =
-weatherCodes[current.weather_code] ||
-"Current conditions";
-addSolMessage(
-"Right now, it’s " +
-Math.round(current.temperature_2m) +
-"°F, with " +
-description +
-"<br>Feels like " +
-Math.round(current.apparent_temperature) +
-"°F, with winds around " +
-Math.round(current.wind_speed_10m) +
-" mph."
-);
-return true;
-} catch (error) {
-addSolMessage(
-"I couldn't get the weather right now, but " +
-'<a class="searchLink" href="https://www.google.com/search?q=weather" target="_blank">' +
-"click here to check the weather on the web" +
-"</a>."
-);
-return true;
-}
-}
-/* =========================================
-SMART MATH
-========================================= */
-function solSmartMath(command) {
-let expression = command;
-expression =
-expression
-.replace(/\bwhat is\b/g, "")
-.replace(/\bcalculate\b/g, "")
-.replace(/\bplus\b/g, "+")
-.replace(/\bminus\b/g, "-")
-.replace(/\btimes\b/g, "*")
-.replace(/\bmultiplied by\b/g, "*")
-.replace(/\bdivided by\b/g, "/")
-.replace(/\bto the power of\b/g, "**")
-.replace(/\bpercent of\b/g, "*")
-.trim();
-if (
-!/[0-9]/.test(expression)
-) {
-return false;
-}
-const result =
-calculateExpression(expression);
-if (result !== null) {
-addSolMessage(
-"The answer is " +
-result +
-"."
-);
-return true;
-}
-return false;
-}
-/* =========================================
-UNIT CONVERSIONS
-========================================= */
-function solConversion(command) {
-let match;
-/* MILES → KILOMETERS */
-match =
-command.match(
-/([\d.]+)\s*(miles?|mi)\s*(?:to|in)\s*(kilometers?|km)/
-);
-if (match) {
-const value =
-parseFloat(match[1]);
-const result =
-value * 1.609344;
-addSolMessage(
-value +
-" miles is " +
-result.toFixed(2) +
-" kilometers."
-);
-return true;
-}
-/* KILOMETERS → MILES */
-match =
-command.match(
-/([\d.]+)\s*(kilometers?|km)\s*(?:to|in)\s*(miles?|mi)/
-);
-if (match) {
-const value =
-parseFloat(match[1]);
-const result =
-value / 1.609344;
-addSolMessage(
-value +
-" kilometers is " +
-result.toFixed(2) +
-" miles."
-);
-return true;
-}
-/* FAHRENHEIT → CELSIUS */
-match =
-command.match(
-/([\d.]+)\s*(?:degrees?\s*)?(fahrenheit|°f)\s*(?:to|in)\s*(celsius|°c)/
-);
-if (match) {
-const value =
-parseFloat(match[1]);
-const result =
-(value - 32) * 5 / 9;
-addSolMessage(
-value +
-"°F is " +
-result.toFixed(1) +
-"°C."
-);
-return true;
-}
-/* CELSIUS → FAHRENHEIT */
-match =
-command.match(
-/([\d.]+)\s*(?:degrees?\s*)?(celsius|°c)\s*(?:to|in)\s*(fahrenheit|°f)/
-);
-if (match) {
-const value =
-parseFloat(match[1]);
-const result =
-(value * 9 / 5) + 32;
-addSolMessage(
-value +
-"°C is " +
-result.toFixed(1) +
-"°F."
-);
-return true;
-}
-/* POUNDS → KILOGRAMS */
-match =
-command.match(
-/([\d.]+)\s*(pounds?|lbs?)\s*(?:to|in)\s*(kilograms?|kg)/
-);
-if (match) {
-const value =
-parseFloat(match[1]);
-const result =
-value * 0.45359237;
-addSolMessage(
-value +
-" pounds is " +
-result.toFixed(2) +
-" kilograms."
-);
-return true;
-}
-/* KILOGRAMS → POUNDS */
-match =
-command.match(
-/([\d.]+)\s*(kilograms?|kg)\s*(?:to|in)\s*(pounds?|lbs?)/
-);
-if (match) {
-const value =
-parseFloat(match[1]);
-const result =
-value / 0.45359237;
-addSolMessage(
-value +
-" kilograms is " +
-result.toFixed(2) +
-" pounds."
-);
-return true;
-}
-return false;
-}
-/* =========================================
-DATE CALCULATIONS
-========================================= */
-function solDaysUntil(command) {
-const match =
-command.match(
-/how many days (?:until|till|until)\s+(.+)/
-);
-if (!match) {
-return false;
-}
-const target =
-new Date(match[1]);
-if (isNaN(target.getTime())) {
-return false;
-}
-const today =
-new Date();
-today.setHours(0,0,0,0);
-target.setHours(0,0,0,0);
-const difference =
-Math.ceil(
-(target - today) /
-86400000
-);
-if (difference < 0) {
-addSolMessage(
-"That date has already passed."
-);
-} else if (difference === 0) {
-addSolMessage(
-"That date is today! ☀️"
-);
-} else if (difference === 1) {
-addSolMessage(
-"That date is tomorrow!"
-);
-} else {
-addSolMessage(
-"There are " +
-difference +
-" days until " +
-target.toLocaleDateString(
-undefined,
-{
-month: "long",
-day: "numeric",
-year: "numeric"
-}
-) +
-"."
-);
-}
-return true;
-}
-/* =========================================
-SMART SEARCH COMMANDS
-========================================= */
-async function solSmartCommand(text) {
-const command =
-text.toLowerCase().trim();
+
+async function smartSol(text) {
+
+const command = text.toLowerCase().trim();
+
 /* WEATHER */
+
 if (
 command === "weather" ||
 command === "what's the weather" ||
@@ -2273,212 +1945,28 @@ command.includes("weather today") ||
 command.includes("weather right now") ||
 command.includes("how is the weather")
 ) {
+
 return await solWeather();
-}
-/* WIKIPEDIA */
-if (
-command.startsWith("who is ") ||
-command.startsWith("what is ") ||
-command.startsWith("tell me about ")
-) {
-let query = null;
-if (
-command.startsWith("who is ")
-) {
-query =
-text.substring(7).trim();
-}
-else if (
-command.startsWith("tell me about ")
-) {
-query =
-text.substring(14).trim();
-}
-else if (
-command.startsWith("what is ")
-) {
-query =
-text.substring(8).trim();
-}
-/*
-Don't intercept existing simple
-math questions.
-*/
-if (
-query &&
-!/^[0-9+\-*/().%\s]+$/.test(query) &&
-!/[0-9]/.test(query)
-) {
-const found =
-await solWikipedia(query);
-if (found) {
-return true;
-}
-}
-}
-/* UNIT CONVERSION */
-if (
-solConversion(command)
-) {
-return true;
-}
-/* DAYS UNTIL */
-if (
-solDaysUntil(command)
-) {
-return true;
-}
-/* SEARCH THE WEB */
-if (
-command.startsWith("search for ") ||
-command.startsWith("search the web for ") ||
-command.startsWith("google ") ||
-command.startsWith("look up ") ||
-command.startsWith("find ")
-) {
-let query = text;
-query =
-query
-.replace(/^search for\s+/i, "")
-.replace(/^search the web for\s+/i, "")
-.replace(/^google\s+/i, "")
-.replace(/^look up\s+/i, "")
-.replace(/^find\s+/i, "")
-.trim();
-if (query) {
-solWebSearch(query);
-return true;
-}
-}
-/* OPEN GOOGLE */
-if (
-command === "open google"
-) {
-window.open(
-"https://www.google.com",
-"_blank"
-);
-addSolMessage(
-"Opening Google."
-);
-return true;
-}
-/* OPEN YOUTUBE */
-if (
-command === "open youtube"
-) {
-window.open(
-"https://www.youtube.com",
-"_blank"
-);
-addSolMessage(
-"Opening YouTube."
-);
-return true;
-}
-/* OPEN WIKIPEDIA */
-if (
-command === "open wikipedia"
-) {
-window.open(
-"https://www.wikipedia.org",
-"_blank"
-);
-addSolMessage(
-"Opening Wikipedia."
-);
-return true;
-}
-/* TIME IN ANOTHER PLACE */
-const timeMatch =
-command.match(
-/what time is it in (.+)/
-);
-if (timeMatch) {
-const place =
-timeMatch[1];
-solWebSearch(
-"current time in " + place
-);
-return true;
-}
-/* SMART MATH */
-if (
-command.startsWith("calculate ") ||
-(
-command.startsWith("what is ") &&
-/[0-9]/.test(command)
-)
-) {
-if (
-solSmartMath(command)
-) {
-return true;
-}
-}
-/* UNKNOWN */
-return false;
-}
-/* =========================================
-OVERRIDE ASK SOL
-========================================= */
 
-askSol = function() {
-
-const input =
-document.getElementById("userInput");
-
-const text =
-input.value.trim();
-
-if (!text) return;
-
-input.value = "";
-
-addUserMessage(text);
-addThinking();
-
-setTimeout(async () => {
-
-removeThinking();
-
-const command =
-text.toLowerCase().trim();
-
-/*
-========================================
-SMART FEATURES FIRST
-========================================
-*/
-
-/* WEATHER */
-if (
-command === "weather" ||
-command === "what's the weather" ||
-command === "what is the weather" ||
-command.includes("weather today") ||
-command.includes("weather right now") ||
-command.includes("how is the weather")
-) {
-const handled = await solWeather();
-
-if (handled) return;
 }
 
 
-/* UNIT CONVERSION */
+/* UNIT CONVERSIONS */
+
 if (solConversion(command)) {
-return;
+return true;
 }
 
 
 /* DAYS UNTIL */
+
 if (solDaysUntil(command)) {
-return;
+return true;
 }
 
 
-/* SEARCH COMMANDS */
+/* SEARCH */
+
 if (
 command.startsWith("search for ") ||
 command.startsWith("search the web for ") ||
@@ -2496,13 +1984,18 @@ let query = text
 .trim();
 
 if (query) {
+
 solWebSearch(query);
-return;
+
+return true;
+
 }
+
 }
 
 
 /* OPEN GOOGLE */
+
 if (command === "open google") {
 
 window.open(
@@ -2511,11 +2004,14 @@ window.open(
 );
 
 addSolMessage("Opening Google.");
-return;
+
+return true;
+
 }
 
 
 /* OPEN YOUTUBE */
+
 if (command === "open youtube") {
 
 window.open(
@@ -2524,11 +2020,14 @@ window.open(
 );
 
 addSolMessage("Opening YouTube.");
-return;
+
+return true;
+
 }
 
 
 /* OPEN WIKIPEDIA */
+
 if (command === "open wikipedia") {
 
 window.open(
@@ -2537,15 +2036,134 @@ window.open(
 );
 
 addSolMessage("Opening Wikipedia.");
+
+return true;
+
+}
+
+
+/* TIME IN ANOTHER PLACE */
+
+const timeMatch =
+command.match(
+/what time is it in (.+)/
+);
+
+if (timeMatch) {
+
+solWebSearch(
+"current time in " + timeMatch[1]
+);
+
+return true;
+
+}
+
+
+/* SMART MATH */
+
+if (
+command.startsWith("calculate ") ||
+(
+command.startsWith("what is ") &&
+/[0-9]/.test(command)
+)
+) {
+
+if (solSmartMath(command)) {
+return true;
+}
+
+}
+
+
+/* WIKIPEDIA */
+
+if (
+command.startsWith("who is ") ||
+command.startsWith("tell me about ")
+) {
+
+let query;
+
+if (command.startsWith("who is ")) {
+
+query =
+text.substring(7).trim();
+
+}
+
+else {
+
+query =
+text.substring(14).trim();
+
+}
+
+if (query) {
+
+const found =
+await solWikipedia(query);
+
+if (found) {
+return true;
+}
+
+}
+
+}
+
+
+/* NOTHING SMART MATCHED */
+
+return false;
+
+}
+
+
+/* =========================================
+REPLACE ASK SOL
+========================================= */
+
+const originalAskSol =
+askSol;
+
+askSol = async function() {
+
+const input =
+document.getElementById("userInput");
+
+const text =
+input.value.trim();
+
+if (!text) return;
+
+input.value = "";
+
+addUserMessage(text);
+
+addThinking();
+
+
+setTimeout(async () => {
+
+removeThinking();
+
+const command =
+text.toLowerCase().trim();
+
+
+/* SMART FEATURES */
+
+const smartHandled =
+await smartSol(text);
+
+if (smartHandled) {
 return;
 }
 
 
-/*
-========================================
-CONVERSATIONAL RESPONSES
-========================================
-*/
+/* EXISTING COMMANDS */
 
 const conversationReply =
 solConversation(command);
@@ -2557,93 +2175,83 @@ conversationReply
 );
 
 return;
+
 }
 
 
-/*
-========================================
-ORIGINAL SOL COMMANDS
-========================================
-*/
+/* RUN ORIGINAL COMMAND SYSTEM */
 
-/*
-We temporarily suppress the original
-function's duplicate user/thinking
-messages and capture its response.
-*/
+let originalResponse =
+null;
 
-let originalResponse = null;
-
-const oldAddUserMessage =
+const savedAddUserMessage =
 addUserMessage;
 
-const oldAddThinking =
+const savedAddThinking =
 addThinking;
 
-const oldRemoveThinking =
+const savedRemoveThinking =
 removeThinking;
 
-const oldAddSolMessage =
+const savedAddSolMessage =
 addSolMessage;
 
 
-/* Prevent duplicates */
-addUserMessage = function() {};
-addThinking = function() {};
-removeThinking = function() {};
+/* Temporarily disable duplicate messages */
+
+addUserMessage =
+function() {};
+
+addThinking =
+function() {};
+
+removeThinking =
+function() {};
 
 
 /* Capture original response */
-addSolMessage = function(response) {
 
-originalResponse = response;
+addSolMessage =
+function(response) {
+
+originalResponse =
+response;
 
 };
 
 
-/*
-Run original command system.
-*/
+/* Run original commands */
 
 const originalInput =
 document.getElementById("userInput");
 
-originalInput.value = text;
+originalInput.value =
+text;
 
 originalAskSol();
 
-
-/*
-Wait for original Sol's 300ms response.
-*/
 
 setTimeout(() => {
 
 originalInput.value = "";
 
 
-/*
-Restore normal functions.
-*/
+/* Restore functions */
 
 addUserMessage =
-oldAddUserMessage;
+savedAddUserMessage;
 
 addThinking =
-oldAddThinking;
+savedAddThinking;
 
 removeThinking =
-oldRemoveThinking;
+savedRemoveThinking;
 
 addSolMessage =
-oldAddSolMessage;
+savedAddSolMessage;
 
 
-/*
-If original Sol answered with something
-other than its web-search fallback,
-show that answer.
-*/
+/* Show original command response */
 
 if (
 originalResponse &&
@@ -2652,119 +2260,25 @@ originalResponse &&
 )
 ) {
 
-oldAddSolMessage(
+savedAddSolMessage(
 originalResponse
 );
 
 return;
+
 }
 
 
-/*
-========================================
-SMART MATH
-========================================
-*/
-
-if (
-command.startsWith("calculate ") ||
-(
-command.startsWith("what is ") &&
-/[0-9]/.test(command)
-)
-) {
-
-if (solSmartMath(command)) {
-return;
-}
-}
-
-
-/*
-========================================
-SMART WIKIPEDIA
-========================================
-*/
-
-if (
-command.startsWith("who is ") ||
-command.startsWith("what is ") ||
-command.startsWith("tell me about ")
-) {
-
-let query = null;
-
-if (command.startsWith("who is ")) {
-query = text.substring(7).trim();
-}
-
-else if (
-command.startsWith("tell me about ")
-) {
-query = text.substring(14).trim();
-}
-
-else if (
-command.startsWith("what is ")
-) {
-query = text.substring(8).trim();
-}
-
-
-/*
-Don't use Wikipedia for simple math.
-*/
-
-if (
-query &&
-!/^[0-9+\-*/().%\s]+$/.test(query)
-) {
-
-solWikipedia(query).then(found => {
-
-if (!found) {
-solWebSearch(text);
-}
-
-});
-
-return;
-}
-}
-
-
-/*
-========================================
-FINAL WEB FALLBACK
-========================================
-*/
+/* WEB FALLBACK */
 
 solWebSearch(text);
 
 }, 350);
 
+
 }, 300);
 
 };
-
-
-/* =========================================
-ENTER KEY
-========================================= */
-
-document
-.getElementById("userInput")
-.addEventListener(
-"keydown",
-function(event) {
-
-if (event.key === "Enter") {
-askSol();
-}
-
-}
-);
-})();
 </script>
 
 </body>
