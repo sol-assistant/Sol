@@ -2443,31 +2443,94 @@ setTimeout(async () => {
 
 removeThinking();
 
-const handled =
-await solSmartCommand(text);
-if (!handled) {
+/*
+FIRST:
+Try the original Sol 3.0 commands.
+This keeps all existing Sol commands working.
+*/
 
-const conversationReply =
+const handledOriginal =
+await new Promise(resolve => {
 
-solConversation(text.toLowerCase().trim());
+const oldAddSolMessage =
+window.addSolMessage;
 
-if (conversationReply) {
+let responded = false;
 
-addSolMessage(conversationReply);
+window.addSolMessage = function(text) {
 
-return;
-}
-}
+responded = true;
 
-if (!handled) {
+oldAddSolMessage(text);
 
-removeLastDuplicateUserMessage();
+};
 
-input.value = text;
+const originalInput =
+document.getElementById("userInput");
+
+originalInput.value = text;
+
+/*
+Run the original Sol command system.
+*/
 
 originalAskSol();
 
+setTimeout(() => {
+
+window.addSolMessage =
+oldAddSolMessage;
+
+originalInput.value = "";
+
+resolve(responded);
+
+}, 20);
+
+});
+
+if (handledOriginal) {
+return;
 }
+
+/*
+SECOND:
+Try the new conversational system.
+*/
+
+const conversationReply =
+solConversation(
+text.toLowerCase().trim()
+);
+
+if (conversationReply) {
+
+addSolMessage(
+conversationReply
+);
+
+return;
+
+}
+
+/*
+THIRD:
+Try the smart system.
+*/
+
+const handledSmart =
+await solSmartCommand(text);
+
+if (handledSmart) {
+return;
+}
+
+/*
+FOURTH:
+Web search fallback.
+*/
+
+solWebSearch(text);
 
 }, 300);
 
