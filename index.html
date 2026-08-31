@@ -2436,72 +2436,119 @@ if (!text) return;
 input.value = "";
 
 addUserMessage(text);
-
 addThinking();
 
 setTimeout(async () => {
 
 removeThinking();
 
-/*
-FIRST:
-Try the original Sol 3.0 commands.
-This keeps all existing Sol commands working.
-*/
-
-const handledOriginal =
-await new Promise(resolve => {
-
-const oldAddSolMessage =
-window.addSolMessage;
-
-let responded = false;
-
-window.addSolMessage = function(text) {
-
-responded = true;
-
-oldAddSolMessage(text);
-
-};
-
-const originalInput =
-document.getElementById("userInput");
-
-originalInput.value = text;
+const command =
+text.toLowerCase().trim();
 
 /*
-Run the original Sol command system.
+========================================
+SMART FEATURES FIRST
+========================================
 */
 
-originalAskSol();
+/* WEATHER */
+if (
+command === "weather" ||
+command === "what's the weather" ||
+command === "what is the weather" ||
+command.includes("weather today") ||
+command.includes("weather right now") ||
+command.includes("how is the weather")
+) {
+const handled = await solWeather();
 
-setTimeout(() => {
+if (handled) return;
+}
 
-window.addSolMessage =
-oldAddSolMessage;
 
-originalInput.value = "";
-
-resolve(responded);
-
-}, 20);
-
-});
-
-if (handledOriginal) {
+/* UNIT CONVERSION */
+if (solConversion(command)) {
 return;
 }
 
+
+/* DAYS UNTIL */
+if (solDaysUntil(command)) {
+return;
+}
+
+
+/* SEARCH COMMANDS */
+if (
+command.startsWith("search for ") ||
+command.startsWith("search the web for ") ||
+command.startsWith("google ") ||
+command.startsWith("look up ") ||
+command.startsWith("find ")
+) {
+
+let query = text
+.replace(/^search for\s+/i, "")
+.replace(/^search the web for\s+/i, "")
+.replace(/^google\s+/i, "")
+.replace(/^look up\s+/i, "")
+.replace(/^find\s+/i, "")
+.trim();
+
+if (query) {
+solWebSearch(query);
+return;
+}
+}
+
+
+/* OPEN GOOGLE */
+if (command === "open google") {
+
+window.open(
+"https://www.google.com",
+"_blank"
+);
+
+addSolMessage("Opening Google.");
+return;
+}
+
+
+/* OPEN YOUTUBE */
+if (command === "open youtube") {
+
+window.open(
+"https://www.youtube.com",
+"_blank"
+);
+
+addSolMessage("Opening YouTube.");
+return;
+}
+
+
+/* OPEN WIKIPEDIA */
+if (command === "open wikipedia") {
+
+window.open(
+"https://www.wikipedia.org",
+"_blank"
+);
+
+addSolMessage("Opening Wikipedia.");
+return;
+}
+
+
 /*
-SECOND:
-Try the new conversational system.
+========================================
+CONVERSATIONAL RESPONSES
+========================================
 */
 
 const conversationReply =
-solConversation(
-text.toLowerCase().trim()
-);
+solConversation(command);
 
 if (conversationReply) {
 
@@ -2510,50 +2557,213 @@ conversationReply
 );
 
 return;
-
 }
 
+
 /*
-THIRD:
-Try the smart system.
+========================================
+ORIGINAL SOL COMMANDS
+========================================
 */
 
-const handledSmart =
-await solSmartCommand(text);
+/*
+We temporarily suppress the original
+function's duplicate user/thinking
+messages and capture its response.
+*/
 
-if (handledSmart) {
+let originalResponse = null;
+
+const oldAddUserMessage =
+addUserMessage;
+
+const oldAddThinking =
+addThinking;
+
+const oldRemoveThinking =
+removeThinking;
+
+const oldAddSolMessage =
+addSolMessage;
+
+
+/* Prevent duplicates */
+addUserMessage = function() {};
+addThinking = function() {};
+removeThinking = function() {};
+
+
+/* Capture original response */
+addSolMessage = function(response) {
+
+originalResponse = response;
+
+};
+
+
+/*
+Run original command system.
+*/
+
+const originalInput =
+document.getElementById("userInput");
+
+originalInput.value = text;
+
+originalAskSol();
+
+
+/*
+Wait for original Sol's 300ms response.
+*/
+
+setTimeout(() => {
+
+originalInput.value = "";
+
+
+/*
+Restore normal functions.
+*/
+
+addUserMessage =
+oldAddUserMessage;
+
+addThinking =
+oldAddThinking;
+
+removeThinking =
+oldRemoveThinking;
+
+addSolMessage =
+oldAddSolMessage;
+
+
+/*
+If original Sol answered with something
+other than its web-search fallback,
+show that answer.
+*/
+
+if (
+originalResponse &&
+!originalResponse.includes(
+"I found something that may help:"
+)
+) {
+
+oldAddSolMessage(
+originalResponse
+);
+
 return;
 }
 
+
 /*
-FOURTH:
-Web search fallback.
+========================================
+SMART MATH
+========================================
+*/
+
+if (
+command.startsWith("calculate ") ||
+(
+command.startsWith("what is ") &&
+/[0-9]/.test(command)
+)
+) {
+
+if (solSmartMath(command)) {
+return;
+}
+}
+
+
+/*
+========================================
+SMART WIKIPEDIA
+========================================
+*/
+
+if (
+command.startsWith("who is ") ||
+command.startsWith("what is ") ||
+command.startsWith("tell me about ")
+) {
+
+let query = null;
+
+if (command.startsWith("who is ")) {
+query = text.substring(7).trim();
+}
+
+else if (
+command.startsWith("tell me about ")
+) {
+query = text.substring(14).trim();
+}
+
+else if (
+command.startsWith("what is ")
+) {
+query = text.substring(8).trim();
+}
+
+
+/*
+Don't use Wikipedia for simple math.
+*/
+
+if (
+query &&
+!/^[0-9+\-*/().%\s]+$/.test(query)
+) {
+
+solWikipedia(query).then(found => {
+
+if (!found) {
+solWebSearch(text);
+}
+
+});
+
+return;
+}
+}
+
+
+/*
+========================================
+FINAL WEB FALLBACK
+========================================
 */
 
 solWebSearch(text);
 
+}, 350);
+
 }, 300);
 
 };
+
+
 /* =========================================
-REMOVE DUPLICATE USER MESSAGE
+ENTER KEY
 ========================================= */
-function removeLastDuplicateUserMessage() {
-const conversation =
-document.getElementById("conversation");
-const messages =
-conversation.querySelectorAll(".message");
-if (messages.length > 0) {
-const last =
-messages[messages.length - 1];
-if (
-last.querySelector(".sender") &&
-last.querySelector(".sender").textContent === "You"
-) {
-last.remove();
+
+document
+.getElementById("userInput")
+.addEventListener(
+"keydown",
+function(event) {
+
+if (event.key === "Enter") {
+askSol();
 }
+
 }
-}
+);
 })();
 </script>
 
