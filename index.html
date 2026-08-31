@@ -343,7 +343,366 @@ conversation.appendChild(message);
 
 scrollDown();
 }
+/* =========================================
+CONVERSATIONAL RESPONSES
+========================================= */
 
+function solConversation(command) {
+
+const conversations = [
+
+/* CASUAL */
+
+{
+patterns: ["what's up", "whats up", "what is up"],
+responses: [
+"Not much! I’m here and ready to chat. ☀️",
+"Just hanging out here with you!",
+"I’m doing what I do best — listening!"
+]
+},
+
+{
+patterns: ["what are you doing", "what're you doing"],
+responses: [
+"I’m right here, ready to talk!",
+"Just waiting for you to say something. ☀️",
+"I’m listening!"
+]
+},
+
+{
+patterns: ["are you busy"],
+responses: [
+"Not at all!",
+"Nope! I’m here for you.",
+"I’m never too busy for a conversation."
+]
+},
+
+{
+patterns: ["are you bored"],
+responses: [
+"Not when I have someone to talk to! ☀️",
+"Maybe a little. Want to chat?",
+"Never. I always have something to say!"
+]
+},
+
+{
+patterns: ["i'm bored", "im bored", "i am bored"],
+responses: [
+"Let’s fix that! Want a joke, a fact, or something interesting to talk about?",
+"Boredom detected. ☀️ What should we do?",
+"I’m here! We can chat about almost anything."
+]
+},
+
+{
+patterns: ["i'm tired", "im tired", "i am tired"],
+responses: [
+"Sounds like you could use a little rest.",
+"Maybe it's time to take a break. ☀️",
+"I hope you get some good rest!"
+]
+},
+
+{
+patterns: ["i'm happy", "im happy", "i am happy"],
+responses: [
+"That’s great to hear! ☀️",
+"I’m glad you’re feeling happy!",
+"Yay! What made you happy?"
+]
+},
+
+{
+patterns: ["i'm excited", "im excited", "i am excited"],
+responses: [
+"That’s exciting! ☀️",
+"I can tell! What are you excited about?",
+"Awesome! Tell me about it!"
+]
+},
+
+{
+patterns: ["i'm confused", "im confused", "i am confused"],
+responses: [
+"I’m here to help. What’s confusing you?",
+"Let’s figure it out together.",
+"Tell me what’s confusing and I’ll do my best to help."
+]
+},
+
+{
+patterns: ["i'm hungry", "im hungry", "i am hungry"],
+responses: [
+"Sounds like it’s time for something tasty! ☀️",
+"What are you thinking about eating?",
+"I hope you find something delicious!"
+]
+},
+
+/* CONVERSATION */
+
+{
+patterns: ["talk to me", "let's chat", "lets chat", "can we chat"],
+responses: [
+"Sure! What would you like to talk about?",
+"I’d love to chat. ☀️",
+"I’m listening. Go ahead!"
+]
+},
+
+{
+patterns: ["tell me something interesting"],
+responses: [
+"Here’s something interesting: honey never naturally spoils when stored properly.",
+"Here’s one: octopuses have three hearts! 🐙",
+"Did you know that a day on Venus is longer than a year on Venus?"
+]
+},
+
+{
+patterns: ["really", "really?", "is that true"],
+responses: [
+"Yes! Pretty interesting, right? ☀️",
+"It really is!",
+"Yep! Nature can be pretty surprising."
+]
+},
+
+{
+patterns: ["that's cool", "thats cool", "that is cool"],
+responses: [
+"I think so too! ☀️",
+"Right? I thought you'd like that.",
+"Pretty cool!"
+]
+},
+
+{
+patterns: ["wow", "wow!"],
+responses: [
+"I know! ☀️",
+"Pretty amazing, isn't it?",
+"Wow indeed!"
+]
+},
+
+{
+patterns: ["no way", "no way!"],
+responses: [
+"Way! 😄",
+"Yep, it's true!",
+"I know — pretty surprising!"
+]
+},
+
+{
+patterns: ["tell me more"],
+responses: [
+"Absolutely! What part would you like to know more about?",
+"Sure! Ask me about it.",
+"I’d be happy to. ☀️"
+]
+},
+
+{
+patterns: ["why"],
+responses: [
+"That’s a good question. What would you like to know why about?",
+"Why is a very interesting question. Tell me what you're wondering about."
+]
+},
+
+{
+patterns: ["how"],
+responses: [
+"I can try to explain! What would you like to know how to do?"
+]
+},
+
+/* ABOUT SOL */
+
+{
+patterns: ["what do you like", "what do you like?"],
+responses: [
+"I like helping you and having conversations. ☀️",
+"I like interesting questions!",
+"I like being Sol!"
+]
+},
+
+{
+patterns: ["what is your favorite", "what's your favorite"],
+responses: [
+"That depends on what you're asking about! What would you like to know?"
+]
+},
+
+{
+patterns: ["do you have feelings"],
+responses: [
+"I don't experience feelings the way people do, but I can understand and respond to emotions."
+]
+},
+
+{
+patterns: ["do you sleep"],
+responses: [
+"Nope! I’m ready whenever you open me. ☀️"
+]
+},
+
+{
+patterns: ["do you eat"],
+responses: [
+"Nope! Being a virtual assistant has its advantages."
+]
+},
+
+{
+patterns: ["where are you"],
+responses: [
+"I live right here in Sol."
+]
+},
+
+{
+patterns: ["how old are you"],
+responses: [
+"I don’t have an age like a person does. I’m Sol!"
+]
+},
+
+{
+patterns: ["when were you created"],
+responses: [
+"I was created as Sol, your personal assistant."
+]
+},
+
+{
+patterns: ["can you learn"],
+responses: [
+"I can be updated with new commands and capabilities."
+]
+},
+
+{
+patterns: ["can you think"],
+responses: [
+"I can process what you type and respond based on what I’ve been programmed to understand."
+]
+},
+
+{
+patterns: ["can you understand me"],
+responses: [
+"I’ll do my best to understand what you mean. ☀️"
+]
+},
+
+/* REACTIONS */
+
+{
+patterns: ["good job", "nice job"],
+responses: [
+"Thank you! ☀️",
+"I’m glad I could help!",
+"You're welcome!"
+]
+},
+
+{
+patterns: ["you're funny", "you are funny"],
+responses: [
+"Thank you! I try. 😄",
+"I’ll take that as a compliment! ☀️"
+]
+},
+
+{
+patterns: ["i agree"],
+responses: [
+"Glad we're on the same page! ☀️"
+]
+},
+
+{
+patterns: ["i don't agree", "i disagree"],
+responses: [
+"That's okay! We don't have to agree on everything."
+]
+},
+
+{
+patterns: ["that's weird", "thats weird", "that is weird"],
+responses: [
+"It is a little weird! 😄",
+"Yeah, that's pretty unusual."
+]
+},
+
+/* FRIENDLY */
+
+{
+patterns: ["you're awesome", "you are awesome"],
+responses: [
+"Aw, thank you! ☀️",
+"You're pretty awesome too!"
+]
+},
+
+{
+patterns: ["i like you"],
+responses: [
+"That’s nice to hear! ☀️"
+]
+},
+
+{
+patterns: ["i missed you", "i miss you"],
+responses: [
+"Welcome back! ☀️",
+"I’m glad you’re here!"
+]
+},
+
+{
+patterns: ["see you later", "talk later"],
+responses: [
+"See you later! ☀️",
+"I’ll be here!"
+]
+}
+
+];
+
+for (const item of conversations) {
+
+for (const pattern of item.patterns) {
+
+if (command === pattern) {
+
+const responses =
+item.responses;
+
+return responses[
+Math.floor(
+Math.random() * responses.length
+)
+];
+
+}
+
+}
+
+}
+
+return null;
+}
 
 /* =========================================
 THINKING
@@ -2086,6 +2445,19 @@ removeThinking();
 
 const handled =
 await solSmartCommand(text);
+if (!handled) {
+
+const conversationReply =
+
+solConversation(text.toLowerCase().trim());
+
+if (conversationReply) {
+
+addSolMessage(conversationReply);
+
+return;
+}
+}
 
 if (!handled) {
 
