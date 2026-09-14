@@ -1903,6 +1903,376 @@ return true;
 SMART SEARCH COMMANDS
 ========================================= */
 async function solSmartCommand(text) {
+
+const command =
+text.toLowerCase().trim();
+
+
+/* =========================================
+WEATHER
+========================================= */
+
+if (
+command === "weather" ||
+command === "what's the weather" ||
+command === "what is the weather" ||
+command === "how's the weather" ||
+command === "how is the weather" ||
+command === "how's the weather today" ||
+command === "how is the weather today" ||
+command === "what's the weather like" ||
+command === "what is the weather like" ||
+command === "what's it like outside" ||
+command === "what is it like outside" ||
+command === "how is it outside" ||
+command === "how's it outside" ||
+command.includes("weather today") ||
+command.includes("weather right now") ||
+command.includes("weather outside") ||
+command.includes("weather like") ||
+command.includes("is it raining") ||
+command.includes("is it raining outside") ||
+command.includes("is it sunny") ||
+command.includes("is it cloudy") ||
+command.includes("is it snowing") ||
+command.includes("how hot is it") ||
+command.includes("how cold is it")
+) {
+
+return await solWeather();
+
+}
+
+
+/* =========================================
+WIKIPEDIA / INFORMATION
+========================================= */
+
+if (
+command.startsWith("who is ") ||
+command.startsWith("who was ") ||
+command.startsWith("what is ") ||
+command.startsWith("what was ") ||
+command.startsWith("tell me about ") ||
+command.startsWith("can you tell me about ") ||
+command.startsWith("tell me who ") ||
+command.startsWith("tell me what ")
+) {
+
+let query = null;
+
+
+/* WHO IS */
+
+if (
+command.startsWith("who is ")
+) {
+
+query =
+text.substring(7).trim();
+
+}
+
+
+/* WHO WAS */
+
+else if (
+command.startsWith("who was ")
+) {
+
+query =
+text.substring(8).trim();
+
+}
+
+
+/* WHAT IS */
+
+else if (
+command.startsWith("what is ")
+) {
+
+query =
+text.substring(8).trim();
+
+}
+
+
+/* WHAT WAS */
+
+else if (
+command.startsWith("what was ")
+) {
+
+query =
+text.substring(9).trim();
+
+}
+
+
+/* TELL ME ABOUT */
+
+else if (
+command.startsWith("tell me about ")
+) {
+
+query =
+text.substring(14).trim();
+
+}
+
+
+/* CAN YOU TELL ME ABOUT */
+
+else if (
+command.startsWith("can you tell me about ")
+) {
+
+query =
+text.substring(22).trim();
+
+}
+
+
+/* TELL ME WHO */
+
+else if (
+command.startsWith("tell me who ")
+) {
+
+query =
+text.substring(12).trim();
+
+}
+
+
+/* TELL ME WHAT */
+
+else if (
+command.startsWith("tell me what ")
+) {
+
+query =
+text.substring(13).trim();
+
+}
+
+
+/*
+Don't send mathematical
+questions to Wikipedia.
+*/
+
+if (
+query &&
+!/^[0-9+\-*/().%\s]+$/.test(query) &&
+!/[0-9]/.test(query)
+) {
+
+const found =
+await solWikipedia(query);
+
+if (found) {
+return true;
+}
+
+}
+
+}
+
+
+/* =========================================
+UNIT CONVERSIONS
+========================================= */
+
+if (
+solConversion(command)
+) {
+
+return true;
+
+}
+
+
+/* =========================================
+DAYS UNTIL
+========================================= */
+
+if (
+solDaysUntil(command)
+) {
+
+return true;
+
+}
+
+
+/* =========================================
+SEARCH THE WEB
+========================================= */
+
+if (
+command.startsWith("search for ") ||
+command.startsWith("search the web for ") ||
+command.startsWith("search the web ") ||
+command.startsWith("google ") ||
+command.startsWith("look up ") ||
+command.startsWith("look for ") ||
+command.startsWith("find ") ||
+command.startsWith("search ")
+) {
+
+let query = text;
+
+query =
+query
+.replace(/^search for\s+/i, "")
+.replace(/^search the web for\s+/i, "")
+.replace(/^search the web\s+/i, "")
+.replace(/^google\s+/i, "")
+.replace(/^look up\s+/i, "")
+.replace(/^look for\s+/i, "")
+.replace(/^find\s+/i, "")
+.replace(/^search\s+/i, "")
+.trim();
+
+if (query) {
+
+solWebSearch(query);
+
+return true;
+
+}
+
+}
+
+
+/* =========================================
+OPEN GOOGLE
+========================================= */
+
+if (
+command === "open google" ||
+command === "go to google"
+) {
+
+window.open(
+"https://www.google.com",
+"_blank"
+);
+
+addSolMessage(
+"Opening Google."
+);
+
+return true;
+
+}
+
+
+/* =========================================
+OPEN YOUTUBE
+========================================= */
+
+if (
+command === "open youtube" ||
+command === "go to youtube"
+) {
+
+window.open(
+"https://www.youtube.com",
+"_blank"
+);
+
+addSolMessage(
+"Opening YouTube."
+);
+
+return true;
+
+}
+
+
+/* =========================================
+OPEN WIKIPEDIA
+========================================= */
+
+if (
+command === "open wikipedia" ||
+command === "go to wikipedia"
+) {
+
+window.open(
+"https://www.wikipedia.org",
+"_blank"
+);
+
+addSolMessage(
+"Opening Wikipedia."
+);
+
+return true;
+
+}
+
+
+/* =========================================
+TIME IN ANOTHER PLACE
+========================================= */
+
+const timeMatch =
+command.match(
+/(?:what time is it|what's the time|what is the time|current time|time)\s+(?:in|at)\s+(.+)/
+);
+
+if (timeMatch) {
+
+const place =
+timeMatch[1];
+
+solWebSearch(
+"current time in " + place
+);
+
+return true;
+
+}
+
+
+/* =========================================
+SMART MATH
+========================================= */
+
+if (
+command.startsWith("calculate ") ||
+command.startsWith("what is ") ||
+command.startsWith("what's ") ||
+command.startsWith("how much is ") ||
+command.startsWith("what does ") ||
+command.includes(" plus ") ||
+command.includes(" minus ") ||
+command.includes(" times ") ||
+command.includes(" divided by ")
+) {
+
+if (
+solSmartMath(command)
+) {
+
+return true;
+
+}
+
+}
+
+
+/* =========================================
+UNKNOWN
+========================================= */
+
+return false;
+
+}
 const command =
 text.toLowerCase().trim();
 /* WEATHER */
